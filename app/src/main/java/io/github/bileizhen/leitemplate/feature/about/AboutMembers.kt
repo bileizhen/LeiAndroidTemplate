@@ -166,35 +166,38 @@ internal fun AnimatedListItem(
  *  show 与 focus 分开传：关闭后 focus 仍保留最后一次选择，供退场动画期间继续渲染内容。 */
 @Composable
 internal fun MemberDetailDialog(show: Boolean, focus: MemberFocus?, onDismiss: () -> Unit) {
+    val contentHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 160.dp).coerceAtLeast(180.dp)
     OverlayDialog(show = show, title = "成员信息", onDismissRequest = onDismiss) {
-        focus?.let { current ->
-            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                QqAvatar(current.member.qq, size = 76.dp, spec = 640)
-                Text(current.member.name, fontSize = 20.sp, fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 12.dp))
-                Text(current.group, fontSize = 13.sp, color = colorScheme.onSurfaceVariantSummary,
-                    modifier = Modifier.padding(top = 4.dp))
-                HorizontalDivider(Modifier.padding(vertical = 16.dp),
-                    color = colorScheme.onSurface.copy(alpha = 0.08f))
-                MemberInfoRow("分工", current.member.role)
+        Column(Modifier.fillMaxWidth().heightIn(max = contentHeight)) {
+            focus?.let { current ->
+                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    QqAvatar(current.member.qq, size = 76.dp, spec = 640)
+                    Text(current.member.name, fontSize = 20.sp, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 12.dp))
+                    Text(current.group, fontSize = 13.sp, color = colorScheme.onSurfaceVariantSummary,
+                        modifier = Modifier.padding(top = 4.dp))
+                    HorizontalDivider(Modifier.padding(vertical = 16.dp),
+                        color = colorScheme.onSurface.copy(alpha = 0.08f))
+                    MemberInfoRow("分工", current.member.role)
+                }
+                current.member.detail?.let { detail ->
+                    // 详情可能有多行（作者的贡献说明是分条的），限高后可滚动，不挤走下面的关闭按钮。
+                    Text(detail, fontSize = 13.sp, lineHeight = 21.sp,
+                        color = colorScheme.onSurface,
+                        modifier = Modifier.weight(1f, fill = false).fillMaxWidth().heightIn(max = 300.dp)
+                            .verticalScroll(rememberScrollState())
+                            .padding(top = 12.dp))
+                }
+                if (current.member.name == io.github.bileizhen.leitemplate.core.config.AppMetadata.AUTHOR) {
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    top.yukonga.miuix.kmp.preference.ArrowPreference(title = "GitHub",
+                        onClick = { io.github.bileizhen.leitemplate.ui.util.openExternalLink(context, io.github.bileizhen.leitemplate.core.config.AppMetadata.AUTHOR_URL) })
+                    top.yukonga.miuix.kmp.preference.ArrowPreference(title = "问题反馈",
+                        onClick = { io.github.bileizhen.leitemplate.ui.util.openExternalLink(context, io.github.bileizhen.leitemplate.core.config.AppMetadata.ISSUES_URL) })
+                }
+                TextButton("关闭", onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth().padding(top = 18.dp))
             }
-            current.member.detail?.let { detail ->
-                // 详情可能有多行（作者的贡献说明是分条的），限高后可滚动，不挤走下面的关闭按钮。
-                Text(detail, fontSize = 13.sp, lineHeight = 21.sp,
-                    color = colorScheme.onSurface,
-                    modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(top = 12.dp))
-            }
-            if (current.member.name == io.github.bileizhen.leitemplate.core.config.AppMetadata.AUTHOR) {
-                val context = androidx.compose.ui.platform.LocalContext.current
-                top.yukonga.miuix.kmp.preference.ArrowPreference(title = "GitHub",
-                    onClick = { io.github.bileizhen.leitemplate.ui.util.openExternalLink(context, io.github.bileizhen.leitemplate.core.config.AppMetadata.AUTHOR_URL) })
-                top.yukonga.miuix.kmp.preference.ArrowPreference(title = "问题反馈",
-                    onClick = { io.github.bileizhen.leitemplate.ui.util.openExternalLink(context, io.github.bileizhen.leitemplate.core.config.AppMetadata.ISSUES_URL) })
-            }
-            TextButton("关闭", onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth().padding(top = 18.dp))
         }
     }
 }
