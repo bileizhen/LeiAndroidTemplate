@@ -4,7 +4,7 @@ This template is distilled from the user's Android projects rather than cloning 
 
 - **123PanX**: `core / data / feature / ui` layering, DataStore appearance settings, theme controller, navigation shell conventions.
 - **LeiFetch**: reusable UI component naming and structure (`FloatingBottomBar`, settings controls, blur/liquid effect groups).
-- **XBlocker**: appearance options and compact utility-app shell patterns.
+- **XBlocker**: appearance options, compact utility-app shell patterns, and the saveable page stack / MIUIX NavDisplay / non-predictive NavigationBackHandler return mechanism in `ui/MainActivity.kt` (SukiSU-Ultra v4.1.3 source chain).
 - **LeiChat**: not included in this extraction because the connected GitHub account could not resolve the repository at build time.
 
 ## Kept in the base template

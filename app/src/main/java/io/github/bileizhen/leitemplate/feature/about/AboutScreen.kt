@@ -101,7 +101,8 @@ import io.github.bileizhen.leitemplate.ui.component.TemplateIcons
 import io.github.bileizhen.leitemplate.ui.util.openExternalLink
 
 @Composable
-fun AboutScreen(onBack: () -> Unit, onOpenDocument: (LegalDocument) -> Unit, enableBlur: Boolean) {
+fun AboutScreen(onBack: () -> Unit, onOpenDocument: (LegalDocument) -> Unit, enableBlur: Boolean,
+    onOpenMember: (AboutMember, String) -> Unit) {
     val context = LocalContext.current
     val state = remember { AboutUiState() }
     AboutScreenMiuix(state, AboutScreenActions(onBack) { link ->
@@ -115,7 +116,7 @@ fun AboutScreen(onBack: () -> Unit, onOpenDocument: (LegalDocument) -> Unit, ena
             link.startsWith("template:") -> onOpenDocument(LegalDocument.valueOf(link.substringAfter(':')))
             else -> openExternalLink(context, link)
         }
-    }, enableBlur)
+    }, enableBlur, onOpenMember)
 }
 
 @Immutable
@@ -147,6 +148,7 @@ fun AboutScreenMiuix(
     state: AboutUiState,
     actions: AboutScreenActions,
     enableBlur: Boolean,
+    onOpenMember: (AboutMember, String) -> Unit,
 ) {
     val topAppBarScrollBehavior = MiuixScrollBehavior()
     val lazyListState = rememberLazyListState()
@@ -210,6 +212,7 @@ fun AboutScreenMiuix(
                 scrollProgress = scrollProgress,
                 onLogoHeightChanged = { logoHeightPx = it },
                 enableBlur = enableBlur,
+                onOpenMember = onOpenMember,
             )
         }
     }
@@ -225,6 +228,7 @@ private fun AboutContent(
     lazyListState: LazyListState,
     scrollProgress: Float,
     onLogoHeightChanged: (Int) -> Unit,
+    onOpenMember: (AboutMember, String) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
@@ -268,10 +272,6 @@ private fun AboutContent(
     var projectNameProgress by remember { mutableFloatStateOf(0f) }
     var versionCodeProgress by remember { mutableFloatStateOf(0f) }
     var initialLogoAreaY by remember { mutableFloatStateOf(0f) }
-
-    var selected by remember { mutableStateOf<MemberFocus?>(null) }
-    val shownFocus = remember { mutableStateOf<MemberFocus?>(null) }
-    LaunchedEffect(selected) { selected?.let { shownFocus.value = it } }
 
     LaunchedEffect(lazyListState) {
         snapshotFlow { lazyListState.firstVisibleItemScrollOffset }
@@ -483,7 +483,7 @@ private fun AboutContent(
                         Color.Transparent,
                     ),
                 ) {
-                    MemberRow(member, onClick = { selected = MemberFocus(member, group) })
+                    MemberRow(member, onClick = { onOpenMember(member, group) })
                 }
             }
             item(key = "about") {
@@ -545,8 +545,6 @@ private fun AboutContent(
             }
         }
 
-
-        MemberDetailDialog(show = selected != null, focus = shownFocus.value, onDismiss = { selected = null })
 
     }
 }

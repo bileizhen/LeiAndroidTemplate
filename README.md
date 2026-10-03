@@ -152,7 +152,7 @@ core/config/AppMetadata.kt
 - Liquid Glass 开关
 - Predictive Back 开关
 
-基础包提供 Android 26+ 可用的 `PlainFloatingBar`；关闭悬浮底栏后切换到 MIUIX 标准导航栏，底栏仅保留首页和设置；关于页从设置进入。详情页支持系统返回，Android 34+ 可按设置启用预测性返回动画，页面状态在 Activity 重建后恢复。
+基础包提供 Android 26+ 可用的 `PlainFloatingBar`；关闭悬浮底栏后切换到 MIUIX 标准导航栏，底栏仅保留首页和设置；关于页从设置进入。返回机制沿用 XBlocker：主标签共享根入口，外观、关于及每份许可/隐私文档使用真实页面栈，由 MIUIX `NavDisplay` 负责页面转场。Android 34+ 开启预测性返回后，左右边缘拖动均可预览父页，取消则回弹，完成才退栈；关闭时只在手势完成后返回。弹窗优先关闭，父页滚动位置和嵌套文档层级可在 Activity 重建后恢复。
 
 Android 33+ 且硬件加速可用时，悬浮底栏提供真实 backdrop blur、玻璃折射、色散、高光和拖动反馈；Blur / Liquid Glass 开关即时生效。关闭玻璃只保留模糊，关闭模糊或设备不支持 Shader 时使用纯色底栏。API 26–32 不进入 Shader 组件。设备倾斜高光经过量化，减少无意义重绘。来源与版权链见 `docs/SOURCE_MAP.md` 和 `THIRD_PARTY_NOTICES.md`。
 

@@ -6,7 +6,6 @@ import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
@@ -32,7 +31,7 @@ import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
-fun AppearanceScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
+fun AppearanceScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onOpenScale: () -> Unit) {
     val uiText: (String) -> String = { it }
     val config by viewModel.settings.collectAsStateWithLifecycle()
     top.yukonga.miuix.kmp.basic.Scaffold(
@@ -69,12 +68,11 @@ fun AppearanceScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
                     enabled = Build.VERSION.SDK_INT >= 34, summary = uiText("启用预测性返回手势支持"),
                     startAction = { SettingIcon(TemplateIcons.Back) }, modifier = Modifier.testTag("setting_predictive"))
                 var sliderValue by remember(config.uiScale) { mutableFloatStateOf(config.uiScale) }
-                var showScaleDialog by rememberSaveable { mutableStateOf(false) }
                 BasicComponent(title = uiText("显示缩放"), summary = uiText("调整界面整体缩放"), startAction = { SettingIcon(TemplateIcons.Scale) },
                     endActions = {
                         Text("${(sliderValue * 100).roundToInt()}%", color = MiuixTheme.colorScheme.onSurfaceVariantActions)
                         Icon(TemplateIcons.Forward, contentDescription = null, tint = MiuixTheme.colorScheme.onSurfaceVariantActions)
-                    }, onClick = { showScaleDialog = true },
+                    }, onClick = onOpenScale,
                     bottomAction = {
                         Slider(value = sliderValue, onValueChange = { sliderValue = it },
                             onValueChangeFinished = { viewModel.edit { it.copy(uiScale = sliderValue) } },
@@ -90,23 +88,29 @@ fun AppearanceScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
                                 }
                             })
                     })
-                OverlayDialog(show = showScaleDialog, title = uiText("显示缩放"), summary = "80% - 120%", onDismissRequest = { showScaleDialog = false }) {
-                    var input by remember(showScaleDialog) { mutableStateOf((config.uiScale * 100).roundToInt().toString()) }
-                    TextField(value = input, onValueChange = { if (it.length <= 3 && it.all(Char::isDigit)) input = it }, singleLine = true)
-                    Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        TextButton(uiText("取消"), onClick = { showScaleDialog = false }, modifier = Modifier.weight(1f))
-                        TextButton(uiText("确定"), enabled = input.toIntOrNull() in 80..120, onClick = {
-                            input.toIntOrNull()?.let { value -> viewModel.edit { it.copy(uiScale = value.coerceIn(80, 120) / 100f) } }
-                            showScaleDialog = false
-                        }, modifier = Modifier.weight(1f))
-                    }
-                }
             }
         }
 
     }
 }
 
+}
+
+// Hosted outside NavDisplay entries so a back gesture dismisses the popup first.
+@Composable
+fun ScaleDialog(show: Boolean, viewModel: SettingsViewModel, onDismiss: () -> Unit) {
+    val config by viewModel.settings.collectAsStateWithLifecycle()
+    OverlayDialog(show = show, title = "显示缩放", summary = "80% - 120%", onDismissRequest = onDismiss) {
+        var input by remember(show) { mutableStateOf((config.uiScale * 100).roundToInt().toString()) }
+        TextField(value = input, onValueChange = { if (it.length <= 3 && it.all(Char::isDigit)) input = it }, singleLine = true)
+        Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            TextButton("取消", onClick = onDismiss, modifier = Modifier.weight(1f))
+            TextButton("确定", enabled = input.toIntOrNull() in 80..120, onClick = {
+                input.toIntOrNull()?.let { value -> viewModel.edit { it.copy(uiScale = value.coerceIn(80, 120) / 100f) } }
+                onDismiss()
+            }, modifier = Modifier.weight(1f))
+        }
+    }
 }
 
 @Composable

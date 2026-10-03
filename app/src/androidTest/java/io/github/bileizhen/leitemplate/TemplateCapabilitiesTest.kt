@@ -3,8 +3,14 @@ package io.github.bileizhen.leitemplate
 import android.content.ContentValues
 import android.provider.MediaStore
 import android.os.Build
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.activity.BackEventCompat
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.test.core.app.ApplicationProvider
 import io.github.bileizhen.leitemplate.core.logging.DiagnosticExporter
 import io.github.bileizhen.leitemplate.core.update.AppRelease
@@ -58,6 +64,108 @@ class TemplateCapabilitiesTest {
         compose.onNodeWithTag("navigate_back").performClick()
         compose.onNodeWithTag("navigate_back").performClick()
         compose.onNodeWithTag("tab_1").assertExists()
+        compose.onNodeWithText("导出日志").assertExists()
+    }
+
+    @Test fun predictiveBackSeeksParentCancelsAndCommitsFromEitherEdge() {
+        org.junit.Assume.assumeTrue(Build.VERSION.SDK_INT >= 34)
+        lateinit var activity: ComponentActivity
+        compose.setContent {
+            activity = LocalContext.current.activity()
+            LeiTemplateApp(container)
+        }
+        compose.onNodeWithTag("tab_1").performClick()
+        compose.onNodeWithText("外观").performScrollTo().performClick()
+        val originalLeft = compose.onNodeWithTag("appearance_screen").fetchSemanticsNode().boundsInRoot.left
+        for (edge in listOf(BackEventCompat.EDGE_LEFT, BackEventCompat.EDGE_RIGHT)) {
+            compose.mainClock.autoAdvance = false
+            compose.runOnUiThread {
+                activity.onBackPressedDispatcher.dispatchOnBackStarted(BackEventCompat(0f, 500f, 0f, edge))
+                activity.onBackPressedDispatcher.dispatchOnBackProgressed(BackEventCompat(300f, 500f, .55f, edge))
+            }
+            compose.mainClock.advanceTimeBy(240)
+            compose.onNodeWithTag("settings_screen").assertExists()
+            val seekingLeft = compose.onNodeWithTag("appearance_screen").fetchSemanticsNode().boundsInRoot.left
+            assertTrue("Predictive back must translate the current page to reveal its parent", seekingLeft > originalLeft + 20f)
+            compose.runOnUiThread { activity.onBackPressedDispatcher.dispatchOnBackCancelled() }
+            compose.mainClock.autoAdvance = true
+            compose.waitForIdle()
+            compose.onNodeWithTag("appearance_screen").assertIsDisplayed()
+            compose.onNodeWithTag("settings_screen").assertDoesNotExist()
+            assertEquals(originalLeft, compose.onNodeWithTag("appearance_screen").fetchSemanticsNode().boundsInRoot.left, 1f)
+        }
+        compose.runOnUiThread {
+            activity.onBackPressedDispatcher.dispatchOnBackStarted(BackEventCompat(0f, 500f, 0f, BackEventCompat.EDGE_LEFT))
+            activity.onBackPressedDispatcher.dispatchOnBackProgressed(BackEventCompat(500f, 500f, .8f, BackEventCompat.EDGE_LEFT))
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        compose.onNodeWithTag("appearance_screen").assertDoesNotExist()
+        compose.onNodeWithTag("settings_screen").assertIsDisplayed()
+        compose.onNodeWithTag("tab_1").assertIsDisplayed()
+    }
+
+    @Test fun disabledPredictionKeepsPageStillAndBackDismissesPopupsFirst() {
+        runBlocking { container.settings.edit { it.copy(predictiveBack = false) } }
+        lateinit var activity: ComponentActivity
+        compose.setContent {
+            activity = LocalContext.current.activity()
+            LeiTemplateApp(container)
+        }
+        compose.onNodeWithTag("tab_1").performClick()
+        compose.onNodeWithText("外观").performScrollTo().performClick()
+        val original = compose.onNodeWithTag("appearance_screen").fetchSemanticsNode().boundsInRoot
+        compose.mainClock.autoAdvance = false
+        compose.runOnUiThread {
+            activity.onBackPressedDispatcher.dispatchOnBackStarted(BackEventCompat(0f, 500f, 0f, BackEventCompat.EDGE_LEFT))
+            activity.onBackPressedDispatcher.dispatchOnBackProgressed(BackEventCompat(300f, 500f, .55f, BackEventCompat.EDGE_LEFT))
+        }
+        compose.mainClock.advanceTimeBy(240)
+        assertEquals(original, compose.onNodeWithTag("appearance_screen").fetchSemanticsNode().boundsInRoot)
+        compose.onNodeWithTag("settings_screen").assertDoesNotExist()
+        compose.runOnUiThread { activity.onBackPressedDispatcher.dispatchOnBackCancelled() }
+        compose.mainClock.autoAdvance = true
+        compose.onNodeWithText("显示缩放").performScrollTo().performClick()
+        compose.onNodeWithText("80% - 120%").assertIsDisplayed()
+        compose.runOnUiThread { activity.onBackPressedDispatcher.onBackPressed() }
+        compose.onNodeWithText("80% - 120%").assertDoesNotExist()
+        compose.onNodeWithTag("appearance_screen").assertIsDisplayed()
+        compose.runOnUiThread { activity.onBackPressedDispatcher.onBackPressed() }
+        compose.onNodeWithTag("settings_screen").assertIsDisplayed()
+        compose.onNodeWithText("关于").performScrollTo().performClick()
+        compose.onNodeWithTag("about_screen").performScrollToNode(hasText("bileizhen"))
+        compose.onNodeWithText("bileizhen").performClick()
+        compose.onNodeWithText("成员信息").assertIsDisplayed()
+        compose.runOnUiThread { activity.onBackPressedDispatcher.onBackPressed() }
+        compose.onNodeWithText("成员信息").assertDoesNotExist()
+        compose.onNodeWithTag("about_screen").assertIsDisplayed()
+        compose.runOnUiThread { activity.onBackPressedDispatcher.onBackPressed() }
+        compose.onNodeWithText("导出日志").performScrollTo().performClick()
+        compose.onNodeWithTag("export_logs_save").assertExists()
+        compose.runOnUiThread { activity.onBackPressedDispatcher.onBackPressed() }
+        compose.onNodeWithTag("export_logs_save").assertDoesNotExist()
+        compose.onNodeWithText("检查更新").performScrollTo().performClick()
+        compose.onNodeWithText("测试预览").assertExists()
+        compose.runOnUiThread { activity.onBackPressedDispatcher.onBackPressed() }
+        compose.onNodeWithText("测试预览").assertDoesNotExist()
+        compose.onNodeWithTag("settings_screen").assertIsDisplayed()
+    }
+
+    @Test fun nestedDocumentStackAndAboutScrollSurviveRestoration() {
+        val restoration = StateRestorationTester(compose)
+        restoration.setContent { LeiTemplateApp(container) }
+        compose.onNodeWithTag("tab_1").performClick()
+        compose.onNodeWithText("关于").performScrollTo().performClick()
+        compose.onNodeWithText("开源许可").performScrollTo().performClick()
+        compose.onNodeWithText("Apache License 2.0").performScrollTo().performClick()
+        compose.onNodeWithText("Apache License 2.0").assertExists()
+        restoration.emulateSavedInstanceStateRestore()
+        compose.onNodeWithText("Apache License 2.0").assertExists()
+        compose.onNodeWithTag("navigate_back").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithText("GNU GENERAL PUBLIC LICENSE", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("navigate_back").performClick()
+        compose.onNodeWithText("开源许可").assertIsDisplayed()
+        compose.onNodeWithTag("navigate_back").performClick()
+        compose.onNodeWithTag("tab_1").assertIsDisplayed()
         compose.onNodeWithText("导出日志").assertExists()
     }
 
@@ -212,4 +320,10 @@ class TemplateCapabilitiesTest {
             } finally { resolver.delete(uri, null, null) }
         }
     }
+}
+
+private tailrec fun Context.activity(): ComponentActivity = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.activity()
+    else -> error("Compose host must be a ComponentActivity")
 }

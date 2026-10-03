@@ -13,7 +13,7 @@ The imported application features and source documentation are retained.
 | About and appearance pages | `feature/about/`, `feature/settings/` |
 | Floating Bottom Bar | `ui/component/MainNavigation.kt`, `ui/LeiTemplateApp.kt` |
 | Blur / Liquid Glass | Persisted switches, real API-33+ backdrop blur/refraction/highlights, plain low-API and software-renderer fallback |
-| Predictive Back configuration | Appearance setting and API 34+ predictive detail-page return animation |
+| Predictive Back configuration | XBlocker-style saveable stack, MIUIX NavDisplay gesture seeking/cancel/commit on API 34+, completion-only fallback and popup priority |
 | Template initialization | `scripts/init_template.py`, regression checks in `scripts/tests/` |
 | Standard Gradle Wrapper | Gradle 8.13-generated scripts/JAR and verified distribution checksum |
 | GitHub Actions | `.github/workflows/android.yml`: SDK provisioning, initialization checks, debug build, unit tests, APK/reports |
@@ -23,6 +23,7 @@ The imported application features and source documentation are retained.
 - Resolve the MIUIX Blur manifest minimum SDK conflict while retaining Android 26 support. Shader creation is isolated behind API 33 and hardware support guards.
 - Keep main navigation available when the floating option is disabled.
 - Handle detail-page back navigation and preserve page state across Activity recreation.
+- Replace manual detail-page scaling with XBlocker's MIUIX NavDisplay stack. Keep Apache -> GPL -> About -> Settings parent navigation intact, restore saved entries/scroll state, and host member/scale popups outside entries so they receive back events first.
 - Restore the standalone embedded wrapper in the optional bootstrap script and verify the distribution checksum.
 - Rename both application and test source-set packages; skip generated files and machine-specific SDK settings during initialization.
 - Ignore overflowing release version numbers instead of throwing; propagate coroutine cancellation from update checks.
@@ -48,7 +49,7 @@ The build targets compile SDK 37 and target SDK 36 with Android Gradle Plugin 8.
 - About: LeiFetch logo layout, staged scroll fades and blurred link card; two root tabs (Home/Settings), About opened from Settings with no update/log actions; animated backdrop, brand/version hero and arrow links, copy version/package, configurable developer groups with only the template author included, QQ avatars with offline placeholders, replayed entry animation, member detail dialogs and optional website links, offline GPL/Apache texts, synchronized third-party notices and a privacy document matching template behavior.
 - Backups include only settings; logs and exported report caches are excluded.
 - Debug builds have a separate package. Instrumentation covers navigation/documents, glass/blur/plain/standard bar switching, release-dialog actions, diagnostic ZIP redaction, ContentResolver saving and FileProvider sharing. Debug Settings updates show an explicitly labeled, repeatable preview; release builds retain real update checks. The shader switch test expects a hardware-accelerated Android 33+ device; older devices exercise the plain fallback.
-- Local validation: 17 JVM tests, 7 instrumentation tests on the connected RMX5060 (Android 16), and 2 Python checks. Unit tests isolate the update state machine from Windows file replacement behavior; instrumentation also verifies real DataStore writes for both ignored-release channels.
+- Local validation: 17 JVM tests, 10 instrumentation tests on the connected PLR110 (Android 16), and 2 Python checks. Instrumentation drives AndroidX back-start/progress/cancel/complete events from both edges, checks completion-only navigation with prediction disabled, popup-first back handling, and nested document/parent scroll restoration. Unit tests isolate the update state machine from Windows file replacement behavior; instrumentation also verifies real DataStore writes for both ignored-release channels.
 
 - Reference layouts are adapted from the local 123PanX / LeiFetch sources, preserving attribution and replacing product-specific branding/data. Appearance includes the responsive phone preview and grouped icon controls; update channels use native MIUIX menus with summaries/checkmarks; export and update use native bottom dialogs hosted by the root Scaffold.
 - Downloader tests use a local HTTPS server to verify integrity, cache reuse, digest rejection and HTTPS-only redirects. Transfer tests cover deduplication, cancellation, release changes and installation permission resumption. Debug preview simulates progress without downloading/installing a sample APK.
