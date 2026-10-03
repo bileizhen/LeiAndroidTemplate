@@ -1,6 +1,6 @@
 package io.github.bileizhen.leitemplate.core.logging
 
-/** Shared by stored logs, logcat output, on-screen history and exported reports. */
+/** Shared by stored logs, logcat output, exported reports. */
 object LogRedactor {
     private val bearer = Regex("(?i)\\bBearer\\s+[A-Za-z0-9._~+/=-]+")
     private val credentials = Regex(

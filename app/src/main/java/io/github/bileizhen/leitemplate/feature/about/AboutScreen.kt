@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -19,6 +22,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.bileizhen.leitemplate.BuildConfig
 import io.github.bileizhen.leitemplate.core.config.AppMetadata
+import io.github.bileizhen.leitemplate.core.update.AppRelease
+import io.github.bileizhen.leitemplate.core.update.UpdateChannel
+import io.github.bileizhen.leitemplate.feature.update.UpdateDialogContent
 import io.github.bileizhen.leitemplate.core.update.UpdateService
 import io.github.bileizhen.leitemplate.core.update.UpdateState
 import io.github.bileizhen.leitemplate.ui.util.openExternalLink
@@ -32,6 +38,8 @@ fun AboutScreen(updateService: UpdateService, onOpenLogs: () -> Unit, onOpenDocu
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val updateState by updateService.state.collectAsStateWithLifecycle()
+    val updateSettings by updateService.settings.state.collectAsStateWithLifecycle()
+    var previewVisible by rememberSaveable { mutableStateOf(false) }
 
     fun openUrl(url: String) {
         openExternalLink(context, url)
@@ -68,12 +76,13 @@ fun AboutScreen(updateService: UpdateService, onOpenLogs: () -> Unit, onOpenDocu
             Card(Modifier.padding(top = 14.dp).fillMaxWidth()) {
                 BasicComponent(
                     title = "检查更新",
-                    summary = updateSummary,
+                    summary = if (BuildConfig.UPDATE_DIALOG_PREVIEW) "点击预览更新弹窗（调试版）" else updateSummary,
                     onClick = {
-                        scope.launch { updateService.present() }
+                        if (BuildConfig.UPDATE_DIALOG_PREVIEW) previewVisible = true
+                        else scope.launch { updateService.present() }
                     },
                 )
-                BasicComponent(title = "日志与诊断", summary = "查看、清空或分享运行日志", onClick = onOpenLogs)
+                BasicComponent(title = "日志与诊断", summary = "导出应用日志和诊断信息", onClick = onOpenLogs)
                 BasicComponent(title = "GitHub", summary = AppMetadata.PROJECT_URL, onClick = { openUrl(AppMetadata.PROJECT_URL) })
                 BasicComponent(title = "问题反馈", summary = AppMetadata.ISSUES_URL, onClick = { openUrl(AppMetadata.ISSUES_URL) })
             }
@@ -85,9 +94,23 @@ fun AboutScreen(updateService: UpdateService, onOpenLogs: () -> Unit, onOpenDocu
                 BasicComponent(title = "开源许可", summary = AppMetadata.LICENSE, onClick = { onOpenDocument(LegalDocument.LICENSE) })
                 BasicComponent(title = "第三方声明", summary = "组件来源、版权与许可证", onClick = { onOpenDocument(LegalDocument.NOTICES) })
                 BasicComponent(title = "Apache License 2.0", summary = "第三方组件许可全文", onClick = { onOpenDocument(LegalDocument.APACHE) })
-                BasicComponent(title = "隐私说明", summary = "本地数据、检查更新与诊断分享", onClick = { onOpenDocument(LegalDocument.PRIVACY) })
+                BasicComponent(title = "隐私说明", summary = "本地数据、检查更新与诊断导出", onClick = { onOpenDocument(LegalDocument.PRIVACY) })
                 if (AppMetadata.PRIVACY_URL.isNotBlank()) BasicComponent(title = "在线隐私政策", onClick = { openUrl(AppMetadata.PRIVACY_URL) })
             }
         }
+    }
+    if (BuildConfig.UPDATE_DIALOG_PREVIEW && previewVisible) {
+        val prerelease = updateSettings.channel == UpdateChannel.PRERELEASE
+        val release = AppRelease(
+            version = if (prerelease) "0.2.0-rc.1" else "0.2.0",
+            notes = "测试预览更新说明\n\n• Liquid Glass 浮动导航支持折射、高光与模糊切换。\n• 通用更新弹窗支持正式版 / 预发布版通道、更新说明和忽略版本。\n• 日志可导出为脱敏诊断文件。\n• 关于、开源许可、第三方声明和隐私说明支持离线查看。\n\n这里只用于查看弹窗效果。忽略此版本和稍后均关闭预览，再次点击检查更新即可重新打开。",
+            pageUrl = "${AppMetadata.PROJECT_URL}/releases",
+            apkUrl = null,
+            assetName = "示例 APK（仅用于预览）",
+            prerelease = prerelease,
+        )
+        UpdateDialogContent(UpdateState.Available(release),
+            onDismiss = { previewVisible = false }, onRetry = {},
+            onIgnore = { previewVisible = false }, onOpenRelease = ::openUrl, preview = true)
     }
 }

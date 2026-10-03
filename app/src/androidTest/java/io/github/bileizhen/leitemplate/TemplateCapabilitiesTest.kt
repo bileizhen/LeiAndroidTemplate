@@ -1,6 +1,7 @@
 package io.github.bileizhen.leitemplate
 
-import android.content.Intent
+import android.content.ContentValues
+import android.provider.MediaStore
 import android.os.Build
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -40,7 +41,11 @@ class TemplateCapabilitiesTest {
         }
         compose.onNodeWithText("‹ 返回").performClick()
         compose.onNodeWithText("隐私说明").performScrollTo().performClick()
-        compose.waitUntil(5000) { compose.onAllNodesWithText("本地数据").fetchSemanticsNodes().isNotEmpty() }
+        try {
+            compose.waitUntil(5000) { compose.onAllNodesWithText("本地数据").fetchSemanticsNodes().isNotEmpty() }
+        } catch (error: Throwable) {
+            throw AssertionError(compose.onRoot(useUnmergedTree = true).printToString(), error)
+        }
         compose.onNodeWithText("‹ 返回").performClick()
         compose.onNodeWithText("第三方声明").performScrollTo().performClick()
         compose.waitUntil(5000) { compose.onAllNodesWithText("MIUIX", substring = true).fetchSemanticsNodes().isNotEmpty() }
@@ -86,30 +91,46 @@ class TemplateCapabilitiesTest {
         assertTrue(ignored)
     }
 
-    @Test fun logFilteringClearConfirmationAndFileShare() {
-        container.logger.error("Test", "sample failure token=fake-secret")
+    @Test fun debugUpdatePreviewCanBeOpenedDismissedAndReopened() {
+        assertTrue(BuildConfig.UPDATE_DIALOG_PREVIEW)
+        compose.setContent { LeiTemplateApp(container) }
+        compose.onNodeWithTag("tab_2").performClick()
+        compose.onNodeWithText("检查更新").performScrollTo().performClick()
+        compose.onNodeWithText("应用更新（测试预览）").assertExists()
+        compose.onNodeWithText("稍后").performClick()
+        compose.onNodeWithText("应用更新（测试预览）").assertDoesNotExist()
+        compose.onNodeWithText("检查更新").performScrollTo().performClick()
+        compose.onNodeWithText("忽略此版本").performClick()
+        compose.onNodeWithText("检查更新").performScrollTo().performClick()
+        compose.onNodeWithText("应用更新（测试预览）").assertExists()
+    }
+
+    @Test fun logExportIncludesRedactedDiagnostics() {
+        container.logger.error("Test", "sample failure token=fake-secret", java.io.IOException("offline"))
         compose.setContent { LeiTemplateApp(container) }
         compose.onNodeWithTag("tab_1").performClick()
         compose.onNodeWithText("日志与诊断").performScrollTo().performClick()
-        compose.onNodeWithText("错误").performClick()
-        compose.onNodeWithTag("log_list").performScrollToNode(hasText("sample failure", substring = true))
-        compose.onNodeWithText("sample failure", substring = true).assertExists()
-        compose.onNodeWithTag("log_list").performScrollToNode(hasText("清空日志"))
-        compose.onNodeWithText("清空日志").performClick()
-        compose.onNodeWithText("取消").performClick()
-        assertTrue(container.logger.read().contains("sample failure"))
-        compose.onNodeWithText("清空日志").performClick()
-        compose.onNodeWithText("确认清空").performClick()
-        compose.waitUntil(5000) { container.logger.read().isEmpty() }
-        container.logger.info("Test", "token=fake-secret")
+        compose.onNodeWithText("导出日志").assertIsEnabled()
+        compose.onNodeWithText("搜索日志").assertDoesNotExist()
+        compose.onNodeWithText("清空日志").assertDoesNotExist()
         val file = runBlocking { DiagnosticExporter.create(application, container.logger) }
-        assertFalse(file.readText().contains("fake-secret"))
-        val intent = DiagnosticExporter.shareIntent(application, file)
-        assertTrue(intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
-        assertNotNull(intent.clipData)
-        assertFalse(intent.hasExtra(Intent.EXTRA_TEXT))
-        val uri = intent.clipData!!.getItemAt(0).uri
-        val exported = application.contentResolver.openInputStream(uri)!!.bufferedReader().use { it.readText() }
-        assertTrue(exported.contains("[REDACTED]"))
+        val report = file.readText()
+        assertFalse(report.contains("fake-secret"))
+        assertTrue(report.contains("[REDACTED]"))
+        assertTrue(report.contains("java.io.IOException: offline"))
+        assertTrue(report.contains("package=${BuildConfig.APPLICATION_ID}"))
+        if (Build.VERSION.SDK_INT >= 29) {
+            val resolver = application.contentResolver
+            val uri = checkNotNull(resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "template-export-test-${System.nanoTime()}.txt")
+                put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
+            }))
+            try {
+                runBlocking { DiagnosticExporter.save(application, file, uri) }
+                val saved = resolver.openInputStream(uri)!!.bufferedReader().use { it.readText() }
+                assertEquals(report, saved)
+            } finally { resolver.delete(uri, null, null) }
+        }
     }
 }

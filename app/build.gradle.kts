@@ -19,7 +19,13 @@ android {
     }
 
     buildFeatures { compose = true; buildConfig = true }
-    buildTypes { getByName("debug") { applicationIdSuffix = ".debug" } }
+    buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            buildConfigField("boolean", "UPDATE_DIALOG_PREVIEW", "true")
+        }
+        getByName("release") { buildConfigField("boolean", "UPDATE_DIALOG_PREVIEW", "false") }
+    }
     compileOptions {
         encoding = "UTF-8"
         sourceCompatibility = JavaVersion.VERSION_17

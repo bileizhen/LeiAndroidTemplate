@@ -35,6 +35,8 @@ The imported application features and source documentation are retained.
 python3 -m unittest discover -s scripts/tests -v
 ./gradlew assembleDebug testDebugUnitTest --no-daemon
 ./gradlew connectedDebugAndroidTest
+# To keep the installed preview application after testing, install both APKs
+# and run adb shell am instrument -w <debug-package>.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
 The build targets compile SDK 37 and target SDK 36 with Android Gradle Plugin 8.13.2. This plugin reports a compile-SDK compatibility warning; successful assembly is verified independently of that warning.
@@ -42,8 +44,8 @@ The build targets compile SDK 37 and target SDK 36 with Android Gradle Plugin 8.
 ## Completed reusable capabilities
 
 - Global update dialog: manual/automatic checks, release notes, stable/prerelease labels, trusted release links, retry, dismiss and persistent channel-specific ignored versions.
-- Logs: level/search filtering with stack-trace grouping, selection/copy, confirmed clearing, credential redaction, bounded byte rotation, complete file-based sharing and SAF saving.
+- Logs: one export action using the system document picker, complete diagnostic reports with stack traces, credential redaction and bounded byte rotation.
 - About: copy version/package, developer and optional website links, offline GPL/Apache texts, synchronized third-party notices and a privacy document matching template behavior.
 - Backups include only settings; logs and exported report caches are excluded.
-- Debug builds have a separate package. Instrumentation covers navigation/documents, glass/blur/plain/standard bar switching, release-dialog actions, log clearing, redaction and FileProvider permissions. The shader switch test expects a hardware-accelerated Android 33+ device; older devices exercise the plain fallback.
-- Local validation: 10 JVM tests, 4 instrumentation tests on the connected RMX5060 (Android 16), and 2 Python checks. Unit tests isolate the update state machine from Windows file replacement behavior; instrumentation also verifies real DataStore writes for both ignored-release channels.
+- Debug builds have a separate package. Instrumentation covers navigation/documents, glass/blur/plain/standard bar switching, release-dialog actions, diagnostic redaction and saving through ContentResolver. Debug About updates show an explicitly labeled, repeatable preview; release builds retain real update checks. The shader switch test expects a hardware-accelerated Android 33+ device; older devices exercise the plain fallback.
+- Local validation: 10 JVM tests, 5 instrumentation tests on the connected RMX5060 (Android 16), and 2 Python checks. Unit tests isolate the update state machine from Windows file replacement behavior; instrumentation also verifies real DataStore writes for both ignored-release channels.

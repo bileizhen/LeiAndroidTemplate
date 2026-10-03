@@ -54,7 +54,7 @@ fun SettingsScreen(
         }
         item {
             Card(Modifier.padding(top = 14.dp)) {
-                BasicComponent(title = "日志与诊断", summary = "查看、清理和分享应用日志", onClick = onLogs)
+                BasicComponent(title = "日志与诊断", summary = "导出应用日志和诊断信息", onClick = onLogs)
             }
         }
     }

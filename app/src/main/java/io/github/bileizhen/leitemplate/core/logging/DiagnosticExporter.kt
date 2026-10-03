@@ -1,9 +1,7 @@
 package io.github.bileizhen.leitemplate.core.logging
 
-import android.content.ClipData
 import android.content.Context
-import android.content.Intent
-import androidx.core.content.FileProvider
+import android.net.Uri
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,14 +19,10 @@ object DiagnosticExporter {
         }
     }
 
-    fun shareIntent(context: Context, file: File): Intent {
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.diagnostics", file)
-        return Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "Application diagnostics")
-            putExtra(Intent.EXTRA_STREAM, uri)
-            clipData = ClipData.newRawUri("diagnostics", uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    suspend fun save(context: Context, file: File, destination: Uri) = withContext(Dispatchers.IO) {
+        val output = checkNotNull(context.contentResolver.openOutputStream(destination, "wt")) {
+            "无法打开保存位置"
         }
+        output.use { target -> file.inputStream().use { it.copyTo(target) } }
     }
 }

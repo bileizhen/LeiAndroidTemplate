@@ -31,4 +31,4 @@ The shared update dialog, offline legal document viewer and diagnostics file exp
 
 - Update-checking design is generalized from XBlocker `data/AppUpdates.kt` and its release/version parser. The template removes XBlocker-specific repository URLs and installation behavior and routes repository metadata through `core/config/AppMetadata.kt`.
 - About-page structure is generalized from the shared settings/about patterns in the source apps. Product-specific copy, privacy text and upstream notices are intentionally not copied.
-- Logging is implemented as a small template-owned file logger with crash capture and diagnostic sharing so new apps do not inherit Xposed- or product-specific diagnostics.
+- Logging is implemented as a small template-owned file logger with crash capture and diagnostic export so new apps do not inherit Xposed- or product-specific diagnostics.

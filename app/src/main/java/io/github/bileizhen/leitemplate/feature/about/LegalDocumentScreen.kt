@@ -43,6 +43,7 @@ fun LegalDocumentScreen(document: LegalDocument, onBack: () -> Unit) {
         try {
             text = withContext(Dispatchers.IO) {
                 context.assets.open(document.asset).bufferedReader().use { it.readText() }
+                    .replace("\r\n", "\n").replace('\r', '\n')
                     .replace("@@APP_NAME@@", AppMetadata.APP_NAME)
                     .replace("@@ISSUES_URL@@", AppMetadata.ISSUES_URL)
             }

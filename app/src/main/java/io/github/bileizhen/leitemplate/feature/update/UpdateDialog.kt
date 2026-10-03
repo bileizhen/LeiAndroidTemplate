@@ -41,8 +41,9 @@ fun UpdateDialog(service: UpdateService) {
 /** Presentation can be reused and tested independently of networking. */
 @Composable
 fun UpdateDialogContent(state: UpdateState, onDismiss: () -> Unit, onRetry: () -> Unit,
-                        onIgnore: () -> Unit, onOpenRelease: (String) -> Unit) {
-    TemplateDialog("应用更新", onDismiss) {
+                        onIgnore: () -> Unit, onOpenRelease: (String) -> Unit, preview: Boolean = false) {
+    TemplateDialog(if (preview) "应用更新（测试预览）" else "应用更新", onDismiss) {
+        if (preview) Text("这是调试版的示例更新，不代表实际发布，也不会下载或安装示例 APK。")
         when (state) {
             UpdateState.Idle, UpdateState.Checking -> Text("正在检查 GitHub Releases…")
             UpdateState.UpToDate -> Text("当前已是最新版本")
@@ -58,7 +59,7 @@ fun UpdateDialogContent(state: UpdateState, onDismiss: () -> Unit, onRetry: () -
                 Box(Modifier.fillMaxWidth().heightIn(max = 220.dp).verticalScroll(rememberScrollState())) {
                     SelectionContainer { Text(release.notes.ifBlank { "发布者未提供更新说明。" }) }
                 }
-                TextButton("查看发布 / 下载", onClick = { onOpenRelease(release.pageUrl) },
+                TextButton(if (preview) "查看项目发布页" else "查看发布 / 下载", onClick = { onOpenRelease(release.pageUrl) },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp))
                 TextButton("忽略此版本", onClick = onIgnore,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp))
