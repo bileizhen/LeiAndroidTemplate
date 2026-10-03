@@ -101,9 +101,12 @@ app/src/main/java/<package>/
 `core/logging` 默认保存应用运行日志并做简单轮转，同时安装全局未捕获异常记录器。日志页支持：
 
 - 查看和刷新日志；
-- 清空本地日志；
-- 分享诊断报告；
+- 按等级筛选、搜索并选择复制日志，保留异常堆栈；
+- 二次确认后清空本地日志；
+- 通过 FileProvider 分享完整诊断文件，或使用系统文件选择器保存；
 - 诊断报告自动附带版本、包名、Android 版本、设备型号以及日志。
+
+日志写入和导出统一脱敏常见凭据，按字节轮转并限制单条大小。日志与诊断文件排除在系统备份之外；导出缓存最多保留 5 份，新建时清理超过一天的附件。完整日志通过文件传输，避免 Intent 文本大小限制；外部保存的副本由用户管理。
 
 业务代码可以直接调用：
 
@@ -121,6 +124,9 @@ container.logger.warn("Network", "Request failed", error)
 - 启动自动检查开关；
 - `v1.2.3`、`1.2.3-rc.1` 等版本比较；
 - 识别 Release 中的 APK Asset，但模板默认只跳转发布页，不擅自安装 APK。
+- 全局通用更新弹窗：检查中、已是最新、错误重试、新版信息与更新说明；
+- 自动检查仅在发现新版本时提醒，支持稍后和按通道忽略版本；手动检查仍可查看被忽略版本；
+- 并发检查去重、生命周期取消，以及 Activity 重建时不重复自动检查。
 
 仓库与产品信息统一修改：
 
@@ -132,7 +138,9 @@ core/config/AppMetadata.kt
 
 ### 关于页
 
-关于页默认展示应用名称、简介、版本号与 versionCode，并提供：检查更新、日志与诊断、GitHub、Issues、开发者与开源许可入口。产品如果需要隐私政策、QQ群、官网等链接，只需要继续扩展 `AppMetadata` 和 `AboutScreen`。
+关于页展示应用名称、简介、版本号与 versionCode，支持复制版本信息，并提供更新弹窗、日志与诊断、GitHub、Issues 和开发者入口。GPL-3.0、Apache-2.0、第三方声明及隐私说明均可离线阅读、选择复制，并支持系统返回。
+
+`AppMetadata.WEBSITE_URL` 和 `PRIVACY_URL` 是可选链接，留空时不显示在线入口。创建产品时请同步维护 `assets/legal/PRIVACY.md`、仓库及 APK 内的第三方声明；内置隐私说明描述当前模板的实际网络、日志、备份和分享行为。初始化脚本会同步迁移仪器测试包名。
 
 ## 已保留的统一外观能力
 
@@ -148,7 +156,9 @@ core/config/AppMetadata.kt
 
 基础包提供 Android 26+ 可用的 `PlainFloatingBar`；关闭悬浮底栏后切换到 MIUIX 标准导航栏，保持首页、设置和关于页可访问。详情页支持系统返回，Android 34+ 可按设置启用预测性返回动画，页面状态在 Activity 重建后恢复。
 
-Blur / Liquid Glass 的 DataStore 配置和外观入口已保留。当前模板使用纯色底栏，尚未包含高级 Shader 渲染；添加渲染实现时应单独隔离到 API 33+ 组件，并保留低版本纯色回退与第三方 attribution。对应来源说明见 `docs/SOURCE_MAP.md`。
+Android 33+ 且硬件加速可用时，悬浮底栏提供真实 backdrop blur、玻璃折射、色散、高光和拖动反馈；Blur / Liquid Glass 开关即时生效。关闭玻璃只保留模糊，关闭模糊或设备不支持 Shader 时使用纯色底栏。API 26–32 不进入 Shader 组件。设备倾斜高光经过量化，减少无意义重绘。来源与版权链见 `docs/SOURCE_MAP.md` 和 `THIRD_PARTY_NOTICES.md`。
+
+Debug 构建使用 `.debug` applicationId 后缀，可与产品 Release 包并存。连接测试设备后，执行 `./gradlew connectedDebugAndroidTest` 验证底栏、文档、更新弹窗和诊断交互；这些仪器测试不访问真实更新网络。
 
 ## 按需能力
 

@@ -26,11 +26,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.bileizhen.leitemplate.AppContainer
 import io.github.bileizhen.leitemplate.feature.about.AboutScreen
+import io.github.bileizhen.leitemplate.feature.about.LegalDocument
+import io.github.bileizhen.leitemplate.feature.about.LegalDocumentScreen
+import io.github.bileizhen.leitemplate.feature.update.UpdateDialog
 import io.github.bileizhen.leitemplate.feature.home.HomeScreen
 import io.github.bileizhen.leitemplate.feature.logs.LogScreen
 import io.github.bileizhen.leitemplate.feature.settings.AppearanceScreen
@@ -39,11 +43,12 @@ import io.github.bileizhen.leitemplate.feature.settings.SettingsViewModel
 import io.github.bileizhen.leitemplate.feature.settings.UpdateSettingsViewModel
 import io.github.bileizhen.leitemplate.ui.component.PlainFloatingBar
 import io.github.bileizhen.leitemplate.ui.component.StandardNavigationBar
+import io.github.bileizhen.leitemplate.ui.component.HighApiFloatingNavigation
 import io.github.bileizhen.leitemplate.ui.theme.LeiTheme
 import io.github.bileizhen.leitemplate.ui.util.viewModelFactory
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-private enum class DetailPage { APPEARANCE, LOGS }
+private enum class DetailPage { APPEARANCE, LOGS, LEGAL }
 
 @Composable
 fun LeiTemplateApp(container: AppContainer) {
@@ -53,12 +58,13 @@ fun LeiTemplateApp(container: AppContainer) {
     val updateVm: UpdateSettingsViewModel = viewModel(factory = viewModelFactory { UpdateSettingsViewModel(container.updateSettings) })
 
     LaunchedEffect(updateSettings.autoCheckOnLaunch) {
-        if (updateSettings.autoCheckOnLaunch) container.updates.check()
+        if (updateSettings.autoCheckOnLaunch) container.updates.checkOnLaunch()
     }
 
     LeiTheme(settings) {
         var selected by rememberSaveable { mutableIntStateOf(0) }
         var detail by rememberSaveable { mutableStateOf<DetailPage?>(null) }
+        var document by rememberSaveable { mutableStateOf(LegalDocument.LICENSE) }
         var backProgress by remember { mutableFloatStateOf(0f) }
         val predictiveBack = settings.predictiveBack && Build.VERSION.SDK_INT >= 34
         BackHandler(enabled = detail != null && !predictiveBack) { detail = null }
@@ -74,6 +80,7 @@ fun LeiTemplateApp(container: AppContainer) {
         val icons = listOf(Icons.Default.Home, Icons.Default.Settings, Icons.Default.Info)
 
         Box(Modifier.fillMaxSize().background(MiuixTheme.colorScheme.background).statusBarsPadding()) {
+            val page: @Composable () -> Unit = {
             Box(Modifier.fillMaxSize().navigationBarsPadding()
                 .padding(bottom = if (detail == null) 92.dp else 0.dp)
                 .graphicsLayer {
@@ -83,6 +90,7 @@ fun LeiTemplateApp(container: AppContainer) {
                 when (detail) {
                     DetailPage.APPEARANCE -> AppearanceScreen(settingsVm, onBack = { detail = null })
                     DetailPage.LOGS -> LogScreen(container.logger, onBack = { detail = null })
+                    DetailPage.LEGAL -> LegalDocumentScreen(document, onBack = { detail = null })
                     null -> when (selected) {
                         0 -> HomeScreen()
                         1 -> SettingsScreen(
@@ -90,10 +98,20 @@ fun LeiTemplateApp(container: AppContainer) {
                             onAppearance = { detail = DetailPage.APPEARANCE },
                             onLogs = { detail = DetailPage.LOGS },
                         )
-                        else -> AboutScreen(container.updates, onOpenLogs = { detail = DetailPage.LOGS })
+                        else -> AboutScreen(container.updates, onOpenLogs = { detail = DetailPage.LOGS },
+                            onOpenDocument = { document = it; detail = DetailPage.LEGAL })
                     }
                 }
             }
+            }
+            if (settings.floatingBar && settings.blur && Build.VERSION.SDK_INT >= 33 && LocalView.current.isHardwareAccelerated) {
+                HighApiFloatingNavigation(
+                    selectedIndex = selected, labels = labels, icons = icons, onSelect = { selected = it },
+                    blur = settings.blur, glass = settings.liquidGlass, visible = detail == null,
+                    content = page,
+                )
+            } else {
+            page()
             if (settings.floatingBar && detail == null) {
                 Box(
                     Modifier.align(Alignment.BottomCenter).navigationBarsPadding()
@@ -106,6 +124,8 @@ fun LeiTemplateApp(container: AppContainer) {
                     StandardNavigationBar(selected, labels, icons) { selected = it }
                 }
             }
+            }
         }
+        UpdateDialog(container.updates)
     }
 }

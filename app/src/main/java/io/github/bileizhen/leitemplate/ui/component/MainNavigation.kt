@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,13 +34,13 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 fun PlainFloatingBar(selected: Int, labels: List<String>, icons: List<ImageVector>, onSelect: (Int) -> Unit) {
     val background = if (isInDarkTheme()) MiuixTheme.colorScheme.surfaceContainer else Color.White
     Row(
-        Modifier.fillMaxWidth().height(64.dp).shadow(8.dp, CircleShape).clip(CircleShape)
+        Modifier.fillMaxWidth().height(64.dp).testTag("plain_floating_bar").shadow(8.dp, CircleShape).clip(CircleShape)
             .background(background).padding(4.dp).selectableGroup(),
     ) {
         labels.forEachIndexed { index, label ->
             val tint = if (selected == index) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurface
             Column(
-                Modifier.weight(1f).fillMaxHeight().clip(CircleShape)
+                Modifier.weight(1f).fillMaxHeight().testTag("tab_$index").clip(CircleShape)
                     .background(if (selected == index) tint.copy(alpha = .12f) else Color.Transparent)
                     .selectable(selected == index, role = Role.Tab, onClick = { onSelect(index) }),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -54,10 +55,10 @@ fun PlainFloatingBar(selected: Int, labels: List<String>, icons: List<ImageVecto
 
 @Composable
 fun StandardNavigationBar(selected: Int, labels: List<String>, icons: List<ImageVector>, onSelect: (Int) -> Unit) {
-    NavigationBar {
+    NavigationBar(modifier = Modifier.testTag("standard_navigation_bar")) {
         labels.forEachIndexed { index, label ->
             NavigationBarItem(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).testTag("tab_$index"),
                 selected = selected == index,
                 onClick = { onSelect(index) },
                 icon = icons[index],

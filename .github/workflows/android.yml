@@ -27,7 +27,7 @@ jobs:
       - name: Test template initialization
         run: python3 -m unittest discover -s scripts/tests -v
       - name: Build debug APK and run unit tests
-        run: ./gradlew assembleDebug testDebugUnitTest --no-daemon --stacktrace -Plei.officialRepositoriesFirst=true
+        run: ./gradlew assembleDebug testDebugUnitTest assembleDebugAndroidTest lintDebug --no-daemon --stacktrace -Plei.officialRepositoriesFirst=true
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
@@ -40,3 +40,9 @@ jobs:
         with:
           name: unit-test-reports
           path: app/build/reports/tests/testDebugUnitTest/
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-debug.*

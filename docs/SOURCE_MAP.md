@@ -23,7 +23,9 @@ Room/KSP, networking, WorkManager, Xposed/libxposed, Media3, Coil, QR, download 
 
 ## Advanced shared UI
 
-The source applications contain a richer API-33+ floating bar implementation with blur/liquid-glass shader helpers. Keep those files under `ui/component` when publishing the GitHub template and preserve their upstream notices in `THIRD_PARTY_NOTICES.md`.
+The API-33+ floating bar and its `liquid` / `miuix` helpers are now included under `ui/component`, adapted from the local 123PanX / LeiFetch code. Package names were rewritten, the existing theme and DataStore options are connected, and all upstream headers are preserved. `HighApiFloatingNavigation` keeps shader creation behind API and hardware-support checks. API 26–32, software rendering and disabled blur use the existing plain bar. `ui/util/TiltLightDirection` stabilizes sensor-driven highlights. The full source/license chain is recorded in `THIRD_PARTY_NOTICES.md` and bundled in the APK.
+
+The shared update dialog, offline legal document viewer and diagnostics file exporter are implemented in this template. They contain no product-specific downloader, installer, account or Xposed modules.
 
 ## Reusable application services
 

@@ -15,4 +15,8 @@ object AppMetadata {
     const val PROJECT_URL = "https://github.com/$GITHUB_OWNER/$GITHUB_REPO"
     const val RELEASES_URL = "$PROJECT_URL/releases"
     const val ISSUES_URL = "$PROJECT_URL/issues"
+    const val AUTHOR_URL = "https://github.com/$GITHUB_OWNER"
+    // Optional product-specific URLs. Leave blank to use bundled documents.
+    const val WEBSITE_URL = ""
+    const val PRIVACY_URL = ""
 }

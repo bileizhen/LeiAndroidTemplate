@@ -10,10 +10,10 @@ class GitHubUpdateChecker(
     private val repository: String,
     private val installedVersion: String,
     private val userAgent: String,
-) {
-    fun check(channel: UpdateChannel): AppRelease? {
+) : ReleaseChecker {
+    override fun check(channel: UpdateChannel): AppRelease? {
         val endpoint = if (channel == UpdateChannel.PRERELEASE) {
-            "https://api.github.com/repos/$owner/$repository/releases?per_page=8"
+            "https://api.github.com/repos/$owner/$repository/releases?per_page=100"
         } else {
             "https://api.github.com/repos/$owner/$repository/releases/latest"
         }
@@ -38,11 +38,14 @@ class GitHubUpdateChecker(
             }
             check(bytes.size <= MAX_RESPONSE_BYTES) { "Release response is too large" }
             val json = bytes.toString(Charsets.UTF_8)
-            if (channel == UpdateChannel.PRERELEASE) newestFromList(json) else newestStable(json)
+            parseResponse(json, channel)
         } finally {
             connection.disconnect()
         }
     }
+
+    internal fun parseResponse(json: String, channel: UpdateChannel): AppRelease? =
+        if (channel == UpdateChannel.PRERELEASE) newestFromList(json) else newestStable(json)
 
     private fun newestStable(json: String): AppRelease? {
         val current = Version.parse(installedVersion) ?: return null

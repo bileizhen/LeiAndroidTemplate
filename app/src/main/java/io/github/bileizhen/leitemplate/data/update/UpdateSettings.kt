@@ -5,4 +5,5 @@ import io.github.bileizhen.leitemplate.core.update.UpdateChannel
 data class UpdateSettings(
     val autoCheckOnLaunch: Boolean = true,
     val channel: UpdateChannel = UpdateChannel.STABLE,
+    val ignoredVersions: Map<UpdateChannel, String> = emptyMap(),
 )
