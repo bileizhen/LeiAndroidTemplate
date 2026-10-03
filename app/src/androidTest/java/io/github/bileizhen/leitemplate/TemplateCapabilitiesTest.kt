@@ -61,7 +61,7 @@ class TemplateCapabilitiesTest {
         compose.onNodeWithText("导出日志").assertExists()
     }
 
-    @Test fun aboutTeamSectionsAndMemberDetailsRemainAccessibleWhenScrolling() {
+    @Test fun aboutAuthorCardAndMemberDetailsRemainAccessibleWhenScrolling() {
         compose.setContent { LeiTemplateApp(container) }
         compose.onNodeWithTag("tab_1").performClick()
         compose.onNodeWithText("关于").performScrollTo().performClick()
@@ -74,13 +74,12 @@ class TemplateCapabilitiesTest {
         val close = compose.onNodeWithText("关闭").assertIsDisplayed().fetchSemanticsNode()
         assertTrue("Member close button must remain usable with long text", close.boundsInWindow.height >= 40f * application.resources.displayMetrics.density)
         compose.onNodeWithText("关闭").performClick()
-        compose.onNodeWithTag("about_screen").performScrollToNode(hasText("ShiraM1zu"))
-        compose.onNodeWithText("贡献者 · 内测").assertExists()
-        compose.onNodeWithText("ShiraM1zu").assertIsDisplayed()
-        compose.onNodeWithTag("about_screen").performScrollToNode(hasText("zyemmmm"))
-        compose.onNodeWithText("zyemmmm").assertIsDisplayed()
-        compose.onNodeWithTag("about_screen").performScrollToNode(hasText("LinYe_2804"))
-        compose.onNodeWithText("LinYe_2804").assertIsDisplayed().performClick()
+        val configured = io.github.bileizhen.leitemplate.core.config.AboutCredits.sections.flatMap { it.members }
+        assertEquals(listOf(io.github.bileizhen.leitemplate.core.config.AppMetadata.AUTHOR), configured.map { it.name })
+        compose.onNodeWithText("贡献者 · 内测").assertDoesNotExist()
+        compose.onNodeWithTag("about_screen").performScrollToNode(hasText("GitHub"))
+        compose.onNodeWithTag("about_screen").performScrollToNode(hasText("bileizhen"))
+        compose.onNodeWithText("bileizhen").assertIsDisplayed().performClick()
         compose.onNodeWithText("成员信息").assertIsDisplayed()
         compose.onNodeWithText("关闭").performClick()
         compose.onNodeWithText("检查更新").assertDoesNotExist()

@@ -30,7 +30,7 @@ The shared update dialog, offline legal document viewer and diagnostics file exp
 ## Reusable application services
 
 - Update-checking design is generalized from XBlocker `data/AppUpdates.kt` and its release/version parser. The template removes XBlocker-specific repository URLs and installation behavior and routes repository metadata through `core/config/AppMetadata.kt`.
-- About layout, grouped circular avatar rows, member detail dialogs and replayable entry motion are ported directly from LeiFetch. The default AboutCredits records reproduce the user-provided reference list and describe LeiFetch contributions; new products should replace these records. Product privacy text is template-owned and documents QQ avatar CDN access.
+- About layout, grouped circular avatar rows, member detail dialogs and replayable entry motion are ported directly from LeiFetch. AboutCredits includes only the template author; new products can replace that profile or add their own actual members. Product privacy text is template-owned and documents QQ avatar CDN access.
 - Logging is implemented as a small template-owned file logger with crash capture and diagnostic export so new apps do not inherit Xposed- or product-specific diagnostics.
 
 The screenshot-aligned appearance phone preview, outline icons, About background effect helpers, native MIUIX bottom dialogs and Markdown update notes were adapted directly from local 123PanX sources. The template retains its own metadata, repositories and logger. The update download helper retains its upstream XBlocker MIT attribution; combined UI source-chain notices remain in THIRD_PARTY_NOTICES.md.
