@@ -1,0 +1,20 @@
+package io.github.bileizhen.leitemplate.core.update
+
+data class AppRelease(
+    val version: String,
+    val notes: String,
+    val pageUrl: String,
+    val apkUrl: String?,
+    val assetName: String?,
+    val prerelease: Boolean,
+)
+
+enum class UpdateChannel { STABLE, PRERELEASE }
+
+sealed interface UpdateState {
+    data object Idle : UpdateState
+    data object Checking : UpdateState
+    data object UpToDate : UpdateState
+    data class Available(val release: AppRelease) : UpdateState
+    data class Failed(val reason: String) : UpdateState
+}
