@@ -17,13 +17,17 @@ import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Text
 
 @Composable
-fun TemplateDialog(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+fun TemplateDialog(title: String, onDismiss: () -> Unit,
+                   footer: (@Composable ColumnScope.() -> Unit)? = null,
+                   content: @Composable ColumnScope.() -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(20.dp).heightIn(max = 520.dp).verticalScroll(rememberScrollState()),
+            Column(Modifier.padding(20.dp).heightIn(max = 520.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(title, fontSize = 22.sp)
-                content()
+                Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
+                footer?.invoke(this)
             }
         }
     }

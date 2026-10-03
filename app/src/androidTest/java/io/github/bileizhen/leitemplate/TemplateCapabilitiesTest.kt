@@ -97,6 +97,11 @@ class TemplateCapabilitiesTest {
         compose.onNodeWithTag("tab_2").performClick()
         compose.onNodeWithText("检查更新").performScrollTo().performClick()
         compose.onNodeWithText("应用更新（测试预览）").assertExists()
+        val minimumButtonHeight = 40f * application.resources.displayMetrics.density
+        for (label in listOf("查看项目发布页", "忽略此版本", "稍后")) {
+            val button = compose.onNodeWithText(label).assertIsDisplayed().fetchSemanticsNode()
+            assertTrue("$label must be fully usable without scrolling", button.boundsInWindow.height >= minimumButtonHeight)
+        }
         compose.onNodeWithText("稍后").performClick()
         compose.onNodeWithText("应用更新（测试预览）").assertDoesNotExist()
         compose.onNodeWithText("检查更新").performScrollTo().performClick()
