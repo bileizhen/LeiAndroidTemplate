@@ -91,6 +91,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import top.yukonga.miuix.kmp.basic.SmallTitle
+import io.github.bileizhen.leitemplate.core.config.AboutCredits
+import io.github.bileizhen.leitemplate.core.config.AboutMember
 import io.github.bileizhen.leitemplate.core.config.AppMetadata
 import io.github.bileizhen.leitemplate.ui.component.TemplateIcons
 import io.github.bileizhen.leitemplate.ui.util.openExternalLink
@@ -127,7 +130,11 @@ class AboutUiState {
         AboutLink("开源许可", "template:LICENSE"),
         AboutLink("第三方声明", "template:NOTICES"),
         AboutLink("隐私", "template:PRIVACY"),
-    )
+    ) +
+        listOfNotNull(
+            AppMetadata.WEBSITE_URL.takeIf { it.isNotBlank() }?.let { AboutLink("网站", it) },
+            AppMetadata.PRIVACY_URL.takeIf { it.isNotBlank() }?.let { AboutLink("在线隐私政策", it) },
+        )
 }
 
 @Immutable
@@ -258,6 +265,10 @@ private fun AboutContent(
     var projectNameProgress by remember { mutableFloatStateOf(0f) }
     var versionCodeProgress by remember { mutableFloatStateOf(0f) }
     var initialLogoAreaY by remember { mutableFloatStateOf(0f) }
+
+    var selected by remember { mutableStateOf<MemberFocus?>(null) }
+    val shownFocus = remember { mutableStateOf<MemberFocus?>(null) }
+    LaunchedEffect(selected) { selected?.let { shownFocus.value = it } }
 
     LaunchedEffect(lazyListState) {
         snapshotFlow { lazyListState.firstVisibleItemScrollOffset }
@@ -448,6 +459,30 @@ private fun AboutContent(
                 )
             }
 
+            val memberCard: @Composable (AboutMember, String) -> Unit = { member, group ->
+                Card(
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .fillMaxWidth()
+                        .then(
+                            if (blurEnabled) {
+                                Modifier.textureBlur(
+                                    backdrop = backdrop,
+                                    shape = RoundedCornerShape(16.dp),
+                                    blurRadius = 60f,
+                                    colors = BlurColors(blendColors = blendColors),
+                                    enabled = true,
+                                )
+                            } else Modifier
+                        ),
+                    colors = CardDefaults.defaultColors(
+                        if (blurEnabled) Color.Transparent else colorScheme.surfaceContainer,
+                        Color.Transparent,
+                    ),
+                ) {
+                    MemberRow(member, onClick = { selected = MemberFocus(member, group) })
+                }
+            }
             item(key = "about") {
                 Column(
                     modifier = Modifier
@@ -482,15 +517,18 @@ private fun AboutContent(
                             )
                         }
                     }
-                    Spacer(Modifier.height(40.dp))
-                    Card(Modifier.padding(horizontal = 12.dp).fillMaxWidth()) {
-                        ArrowPreference(title = "开发者", summary = AppMetadata.AUTHOR,
-                            onClick = { actions.onOpenLink(AppMetadata.AUTHOR_URL) })
-                        ArrowPreference(title = "问题反馈", onClick = { actions.onOpenLink(AppMetadata.ISSUES_URL) })
-                        if (AppMetadata.WEBSITE_URL.isNotBlank()) ArrowPreference(title = "网站",
-                            onClick = { actions.onOpenLink(AppMetadata.WEBSITE_URL) })
-                        if (AppMetadata.PRIVACY_URL.isNotBlank()) ArrowPreference(title = "在线隐私政策",
-                            onClick = { actions.onOpenLink(AppMetadata.PRIVACY_URL) })
+                    AboutCredits.sections.forEachIndexed { sectionIndex, section ->
+                        // 首个分组的标题正好落在首屏下沿、只露出半截；多留一段空白把它整体压到屏幕外。
+                        Spacer(Modifier.height(if (sectionIndex == 0) 40.dp else 18.dp))
+                        SmallTitle(section.title, insideMargin = PaddingValues(horizontal = 20.dp, vertical = 8.dp))
+                        section.members.forEachIndexed { index, member ->
+                            AnimatedListItem(listState = lazyListState, hostKey = "about") {
+                                Column {
+                                    memberCard(member, section.title)
+                                    if (index < section.members.lastIndex) Spacer(Modifier.height(10.dp))
+                                }
+                            }
+                        }
                     }
                     Spacer(
                         Modifier.height(
@@ -502,6 +540,8 @@ private fun AboutContent(
             }
         }
 
+
+        MemberDetailDialog(show = selected != null, focus = shownFocus.value, onDismiss = { selected = null })
 
     }
 }

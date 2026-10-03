@@ -26,7 +26,7 @@ Full GPL-3.0 and Apache-2.0 texts are packaged in `app/src/main/assets/legal/` a
 
 ## Shared settings, About, diagnostic and update UI
 
-The phone theme preview, icon paths, appearance layout, LeiFetch About logo/fade layout and blurred bars, animated About background shaders, bottom dialogs and update Markdown renderer are adapted from the local 123PanX / LeiFetch / XBlocker / SukiSU-Ultra source chain. GPL-3.0-only attribution headers are retained. Template branding and product configuration replace application-specific data.
+The phone theme preview, icon paths, appearance layout, LeiFetch About logo/fade layout, grouped member records, QQ avatar rows, member dialogs, AnimatedList entry motion and blurred bars, animated About background shaders, bottom dialogs and update Markdown renderer are adapted from the local 123PanX / LeiFetch / XBlocker / SukiSU-Ultra source chain. GPL-3.0-only attribution headers are retained. Template branding and product configuration replace application-specific data.
 
 The cancellable HTTPS download and verification helper is adapted from 123PanX `UpdateDownloader.kt`, originally XBlocker `data/AppUpdates.kt`. OkHttp and Okio are used under Apache-2.0. The upstream helper's MIT permission follows:
 

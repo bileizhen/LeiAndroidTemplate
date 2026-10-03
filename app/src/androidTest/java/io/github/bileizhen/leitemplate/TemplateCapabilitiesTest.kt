@@ -61,6 +61,30 @@ class TemplateCapabilitiesTest {
         compose.onNodeWithText("导出日志").assertExists()
     }
 
+    @Test fun aboutTeamSectionsAndMemberDetailsRemainAccessibleWhenScrolling() {
+        compose.setContent { LeiTemplateApp(container) }
+        compose.onNodeWithTag("tab_1").performClick()
+        compose.onNodeWithText("关于").performScrollTo().performClick()
+        compose.onNodeWithTag("about_screen").performScrollToNode(hasText("bileizhen"))
+        compose.onNodeWithText("开发组").assertExists()
+        compose.onNodeWithText("开发 · 设计 · 维护").assertIsDisplayed()
+        compose.onNodeWithText("bileizhen").performClick()
+        compose.onNodeWithText("成员信息").assertIsDisplayed()
+        compose.onNodeWithText("分工").assertExists()
+        compose.onNodeWithText("关闭").assertIsDisplayed().performClick()
+        compose.onNodeWithTag("about_screen").performScrollToNode(hasText("ShiraM1zu"))
+        compose.onNodeWithText("贡献者 · 内测").assertExists()
+        compose.onNodeWithText("ShiraM1zu").assertIsDisplayed()
+        compose.onNodeWithTag("about_screen").performScrollToNode(hasText("zyemmmm"))
+        compose.onNodeWithText("zyemmmm").assertIsDisplayed()
+        compose.onNodeWithTag("about_screen").performScrollToNode(hasText("LinYe_2804"))
+        compose.onNodeWithText("LinYe_2804").assertIsDisplayed().performClick()
+        compose.onNodeWithText("成员信息").assertIsDisplayed()
+        compose.onNodeWithText("关闭").performClick()
+        compose.onNodeWithText("检查更新").assertDoesNotExist()
+        compose.onNodeWithText("导出日志").assertDoesNotExist()
+    }
+
     @Test fun floatingBlurAndGlassSwitchesSelectRenderingWithoutLosingTabs() {
         compose.setContent { LeiTemplateApp(container) }
         compose.onNodeWithTag("plain_floating_bar").assertExists()
