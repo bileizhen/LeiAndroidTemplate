@@ -4,7 +4,7 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 data class AppearanceSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val monet: Boolean = true,
+    val monet: Boolean = false,
     val uiScale: Float = 1f,
     val blur: Boolean = true,
     val floatingBar: Boolean = true,

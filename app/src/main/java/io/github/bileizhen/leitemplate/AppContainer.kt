@@ -20,6 +20,9 @@ class AppContainer(context: Context) {
         produceFile = { context.preferencesDataStoreFile("app.preferences_pb") },
     )
 
+    val updateTransfer = io.github.bileizhen.leitemplate.core.update.UpdateTransfer(
+        io.github.bileizhen.leitemplate.core.update.UpdateDownloader(okhttp3.OkHttpClient(), java.io.File(context.cacheDir, "updates")),
+        io.github.bileizhen.leitemplate.core.update.AndroidUpdateInstaller(context.applicationContext), appScope)
     val logger = AppLogger(context)
     val settings = SettingsRepository(settingsStore, appScope)
     val updateSettings = UpdateSettingsRepository(settingsStore, appScope)

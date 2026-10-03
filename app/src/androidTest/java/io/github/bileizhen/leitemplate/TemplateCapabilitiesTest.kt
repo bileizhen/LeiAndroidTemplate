@@ -27,28 +27,38 @@ class TemplateCapabilitiesTest {
 
     @Before fun prepare() = runBlocking {
         container.updateSettings.setAutoCheck(false)
+        container.updateSettings.setChannel(UpdateChannel.STABLE)
         container.settings.edit { AppearanceSettings(blur = false) }
     }
 
     @Test fun navigationLegalDocumentsAndBackRemainAccessible() {
         compose.setContent { LeiTemplateApp(container) }
-        compose.onNodeWithTag("tab_2").performClick()
+        compose.onNodeWithTag("tab_2").assertDoesNotExist()
+        compose.onNodeWithTag("tab_1").performClick()
+        compose.onNodeWithText("关于").performScrollTo().performClick()
+        compose.onNodeWithText("检查更新").assertDoesNotExist()
+        compose.onNodeWithText("导出日志").assertDoesNotExist()
+        compose.onNodeWithTag("tab_1").assertDoesNotExist()
         compose.onNodeWithText("开源许可").performScrollTo().performClick()
         try {
             compose.waitUntil(5000) { compose.onAllNodesWithText("GNU GENERAL PUBLIC LICENSE", substring = true).fetchSemanticsNodes().isNotEmpty() }
         } catch (error: Throwable) {
             throw AssertionError(compose.onRoot(useUnmergedTree = true).printToString(), error)
         }
-        compose.onNodeWithText("‹ 返回").performClick()
-        compose.onNodeWithText("隐私说明").performScrollTo().performClick()
+        compose.onNodeWithTag("navigate_back").performClick()
+        compose.onNodeWithText("隐私").performScrollTo().performClick()
         try {
             compose.waitUntil(5000) { compose.onAllNodesWithText("本地数据").fetchSemanticsNodes().isNotEmpty() }
         } catch (error: Throwable) {
             throw AssertionError(compose.onRoot(useUnmergedTree = true).printToString(), error)
         }
-        compose.onNodeWithText("‹ 返回").performClick()
+        compose.onNodeWithTag("navigate_back").performClick()
         compose.onNodeWithText("第三方声明").performScrollTo().performClick()
         compose.waitUntil(5000) { compose.onAllNodesWithText("MIUIX", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("navigate_back").performClick()
+        compose.onNodeWithTag("navigate_back").performClick()
+        compose.onNodeWithTag("tab_1").assertExists()
+        compose.onNodeWithText("导出日志").assertExists()
     }
 
     @Test fun floatingBlurAndGlassSwitchesSelectRenderingWithoutLosingTabs() {
@@ -63,8 +73,10 @@ class TemplateCapabilitiesTest {
         } else compose.onNodeWithTag("plain_floating_bar").assertExists()
         runBlocking { container.settings.edit { it.copy(floatingBar = false) } }
         compose.waitUntil(5000) { compose.onAllNodesWithTag("standard_navigation_bar").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithTag("tab_2").performClick()
-        compose.onNodeWithText("复制版本信息").assertExists()
+        compose.onNodeWithTag("tab_2").assertDoesNotExist()
+        compose.onNodeWithTag("tab_1").performClick()
+        compose.onNodeWithText("关于").performScrollTo().performClick()
+        compose.onNodeWithTag("about_logo").assertExists()
     }
 
     @Test fun updateNotesAndActionsAreUsable() {
@@ -81,11 +93,13 @@ class TemplateCapabilitiesTest {
             null, null, true)
         compose.setContent {
             LeiTheme(AppearanceSettings()) {
+                top.yukonga.miuix.kmp.basic.Scaffold {
                 UpdateDialogContent(UpdateState.Available(release), {}, {}, { ignored = true }, { opened = it })
+                }
             }
         }
         compose.onNodeWithText("A test release").assertExists()
-        compose.onNodeWithText("查看发布 / 下载").performClick()
+        compose.onNodeWithText("查看发布").performClick()
         assertEquals(release.pageUrl, opened)
         compose.onNodeWithText("忽略此版本").performClick()
         assertTrue(ignored)
@@ -94,47 +108,80 @@ class TemplateCapabilitiesTest {
     @Test fun debugUpdatePreviewCanBeOpenedDismissedAndReopened() {
         assertTrue(BuildConfig.UPDATE_DIALOG_PREVIEW)
         compose.setContent { LeiTemplateApp(container) }
-        compose.onNodeWithTag("tab_2").performClick()
-        compose.onNodeWithText("检查更新").performScrollTo().performClick()
-        compose.onNodeWithText("应用更新（测试预览）").assertExists()
+        compose.onNodeWithTag("tab_1").performClick()
+        compose.onNodeWithTag("settings_screen").performScrollToNode(hasText("检查更新"))
+        compose.onNodeWithText("检查更新").performClick()
+        compose.onNodeWithText("测试预览").assertExists()
         val minimumButtonHeight = 40f * application.resources.displayMetrics.density
-        for (label in listOf("查看项目发布页", "忽略此版本", "稍后")) {
+        for (label in listOf("下载更新", "关闭")) {
             val button = compose.onNodeWithText(label).assertIsDisplayed().fetchSemanticsNode()
             assertTrue("$label must be fully usable without scrolling", button.boundsInWindow.height >= minimumButtonHeight)
         }
-        compose.onNodeWithText("稍后").performClick()
-        compose.onNodeWithText("应用更新（测试预览）").assertDoesNotExist()
-        compose.onNodeWithText("检查更新").performScrollTo().performClick()
+        compose.onNodeWithText("关闭").performClick()
+        compose.onNodeWithText("测试预览").assertDoesNotExist()
+        compose.onNodeWithTag("settings_screen").performScrollToNode(hasText("检查更新"))
+        compose.onNodeWithText("检查更新").performClick()
         compose.onNodeWithText("忽略此版本").performClick()
-        compose.onNodeWithText("检查更新").performScrollTo().performClick()
-        compose.onNodeWithText("应用更新（测试预览）").assertExists()
+        compose.onNodeWithTag("settings_screen").performScrollToNode(hasText("检查更新"))
+        compose.onNodeWithText("检查更新").performClick()
+        compose.onNodeWithText("测试预览").assertExists()
+    }
+
+    @Test fun appearancePreviewAndChannelMenuMatchNativeControls() {
+        compose.setContent { LeiTemplateApp(container) }
+        compose.onNodeWithTag("tab_1").performClick()
+        compose.onNodeWithTag("update_channel").performClick()
+        compose.onNodeWithText("仅接收稳定发布").assertExists()
+        compose.onNodeWithText("提前获取 rc 测试版本").performClick()
+        compose.waitUntil(5000) { container.updateSettings.state.value.channel == UpdateChannel.PRERELEASE }
+        compose.onNodeWithText("提前获取 rc 测试版本").assertDoesNotExist()
+        compose.onNodeWithText("外观").performScrollTo().performClick()
+        compose.onNodeWithTag("theme_preview").assertExists()
+        compose.onNodeWithText("深色").performClick()
+        compose.waitUntil(5000) { container.settings.state.value.themeMode == io.github.bileizhen.leitemplate.data.settings.ThemeMode.DARK }
+        compose.onNodeWithTag("setting_blur").performScrollTo().performClick()
+        compose.waitUntil(5000) { container.settings.state.value.blur }
+        compose.onNodeWithTag("navigate_back").performClick()
+        compose.onNodeWithTag("tab_0").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("glass_floating_bar").fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test fun logExportIncludesRedactedDiagnostics() {
         container.logger.error("Test", "sample failure token=fake-secret", java.io.IOException("offline"))
         compose.setContent { LeiTemplateApp(container) }
         compose.onNodeWithTag("tab_1").performClick()
-        compose.onNodeWithText("日志与诊断").performScrollTo().performClick()
-        compose.onNodeWithText("导出日志").assertIsEnabled()
+        compose.onNodeWithText("导出日志").performScrollTo().performClick()
+        compose.onNodeWithTag("export_logs_save").assertIsEnabled()
+        compose.onNodeWithTag("export_logs_share").assertIsEnabled()
         compose.onNodeWithText("搜索日志").assertDoesNotExist()
         compose.onNodeWithText("清空日志").assertDoesNotExist()
         val file = runBlocking { DiagnosticExporter.create(application, container.logger) }
-        val report = file.readText()
+        val report = java.util.zip.ZipFile(file).use { zip ->
+            assertNotNull(zip.getEntry("logs.txt"))
+            zip.getInputStream(zip.getEntry("diagnostics.txt")).bufferedReader().use { it.readText() }
+        }
         assertFalse(report.contains("fake-secret"))
         assertTrue(report.contains("[REDACTED]"))
         assertTrue(report.contains("java.io.IOException: offline"))
         assertTrue(report.contains("package=${BuildConfig.APPLICATION_ID}"))
+        val intent = DiagnosticExporter.shareIntent(application, file)
+        assertEquals("application/zip", intent.type)
+        assertTrue(intent.flags and android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+        assertNotNull(intent.clipData)
+        assertFalse(intent.hasExtra(android.content.Intent.EXTRA_TEXT))
+        val shared = application.contentResolver.openInputStream(intent.clipData!!.getItemAt(0).uri)!!.use { it.readBytes() }
+        assertArrayEquals(file.readBytes(), shared)
         if (Build.VERSION.SDK_INT >= 29) {
             val resolver = application.contentResolver
             val uri = checkNotNull(resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, "template-export-test-${System.nanoTime()}.txt")
-                put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "template-export-test-${System.nanoTime()}.zip")
+                put(MediaStore.MediaColumns.MIME_TYPE, "application/zip")
                 put(MediaStore.MediaColumns.IS_PENDING, 1)
             }))
             try {
                 runBlocking { DiagnosticExporter.save(application, file, uri) }
-                val saved = resolver.openInputStream(uri)!!.bufferedReader().use { it.readText() }
-                assertEquals(report, saved)
+                val saved = resolver.openInputStream(uri)!!.use { it.readBytes() }
+                assertArrayEquals(file.readBytes(), saved)
             } finally { resolver.delete(uri, null, null) }
         }
     }

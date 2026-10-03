@@ -17,7 +17,7 @@
 - 阿里云 Maven 镜像优先、官方仓库回退
 - 文件日志、崩溃日志与诊断导出
 - GitHub Releases 检查更新（正式版 / 预发布版）
-- 可复用关于页（版本、GitHub、反馈、日志、许可）
+- 可复用关于页（品牌、版本、项目链接、许可与隐私）
 - GitHub Actions Debug 构建与单元测试
 
 模板默认只带“应用壳”，不会把 Room、Xposed、Media3、下载引擎等某个产品才需要的依赖塞进所有新项目。
@@ -96,13 +96,13 @@ app/src/main/java/<package>/
 
 ## 通用应用能力
 
-调试版的关于页「检查更新」默认显示标注为测试预览的示例弹窗，方便查看正式版 / 预发布版样式；预览的忽略操作不写入真实更新设置。正式版使用 GitHub Releases 检查，启动时自动检查仍走真实服务。需要在调试版手动检查真实更新时，将 `app/build.gradle.kts` 中 debug 的 `UPDATE_DIALOG_PREVIEW` 改为 `false`。
+调试版的「检查更新」默认显示测试预览，方便查看更新说明、下载源、安装包大小及下载进度；预览不请求网络或安装应用，忽略操作不写入真实设置。正式版检查 GitHub Releases，启动时自动检查仍使用真实服务。需要在调试版手动检查真实更新时，将 `app/build.gradle.kts` 中 debug 的 `UPDATE_DIALOG_PREVIEW` 改为 `false`。
 
 ### 日志与诊断
 
-`core/logging` 默认保存应用运行日志并做容量轮转，同时安装全局未捕获异常记录器。日志页仅提供「导出日志」，使用系统文件选择器保存 TXT 诊断文件，无需存储权限。报告包含版本、包名、Android 版本、设备型号和完整运行日志及异常堆栈。
+`core/logging` 保存运行及崩溃日志，按字节限制容量并轮转。「导出日志」打开 MIUIX 底部弹窗，提供「保存日志」和「分享日志」。ZIP 内含 `diagnostics.txt`（版本、包名、Android 版本、设备型号与日志）及 `logs.txt`（完整运行日志和异常堆栈）。保存使用系统文件选择器，无需存储权限；分享使用 FileProvider，仅临时授予附件读取权限。
 
-日志写入和导出统一脱敏常见凭据，按字节轮转并限制单条大小。日志与诊断缓存排除在系统备份之外；导出缓存最多保留 5 份，新建时清理超过一天的附件。外部保存的副本由用户管理。
+日志写入和导出统一脱敏常见凭据。日志和诊断缓存排除在系统备份之外；诊断缓存最多保留 5 份，新建时清理超过一天的附件。外部保存或发送的副本由用户管理。
 
 业务代码可以直接调用：
 
@@ -134,9 +134,9 @@ core/config/AppMetadata.kt
 
 ### 关于页
 
-关于页展示应用名称、简介、版本号与 versionCode，支持复制版本信息，并提供更新弹窗、日志与诊断、GitHub、Issues 和开发者入口。GPL-3.0、Apache-2.0、第三方声明及隐私说明均可离线阅读、选择复制，并支持系统返回。
+关于页沿用 LeiFetch 的独立品牌区、分阶段滚动淡出和模糊链接卡片，展示应用名称与版本；点击版本复制版本号、versionCode 和包名。关于页提供 GitHub、LeiFetch、许可、声明、隐私及开发者链接，更新与日志入口位于设置页。GPL-3.0、Apache-2.0、第三方声明及隐私说明均可离线阅读、选择复制，并支持系统返回。
 
-`AppMetadata.WEBSITE_URL` 和 `PRIVACY_URL` 是可选链接，留空时不显示在线入口。创建产品时请同步维护 `assets/legal/PRIVACY.md`、仓库及 APK 内的第三方声明；内置隐私说明描述当前模板的实际网络、日志、备份和导出行为。初始化脚本会同步迁移仪器测试包名。
+`AppMetadata.WEBSITE_URL` 和 `PRIVACY_URL` 是可选链接，留空时不显示在线入口。创建产品时请同步维护 `assets/legal/PRIVACY.md`、仓库及 APK 内的第三方声明；内置隐私说明描述当前模板的实际网络、日志、备份、导出和更新安装行为。初始化脚本会同步迁移仪器测试包名。
 
 ## 已保留的统一外观能力
 
@@ -150,7 +150,7 @@ core/config/AppMetadata.kt
 - Liquid Glass 开关
 - Predictive Back 开关
 
-基础包提供 Android 26+ 可用的 `PlainFloatingBar`；关闭悬浮底栏后切换到 MIUIX 标准导航栏，保持首页、设置和关于页可访问。详情页支持系统返回，Android 34+ 可按设置启用预测性返回动画，页面状态在 Activity 重建后恢复。
+基础包提供 Android 26+ 可用的 `PlainFloatingBar`；关闭悬浮底栏后切换到 MIUIX 标准导航栏，底栏仅保留首页和设置；关于页从设置进入。详情页支持系统返回，Android 34+ 可按设置启用预测性返回动画，页面状态在 Activity 重建后恢复。
 
 Android 33+ 且硬件加速可用时，悬浮底栏提供真实 backdrop blur、玻璃折射、色散、高光和拖动反馈；Blur / Liquid Glass 开关即时生效。关闭玻璃只保留模糊，关闭模糊或设备不支持 Shader 时使用纯色底栏。API 26–32 不进入 Shader 组件。设备倾斜高光经过量化，减少无意义重绘。来源与版权链见 `docs/SOURCE_MAP.md` 和 `THIRD_PARTY_NOTICES.md`。
 
@@ -184,3 +184,9 @@ Debug 构建使用 `.debug` applicationId 后缀，可与产品 Release 包并�
 ## License
 
 GPL-3.0-only。详见 `LICENSE` 与 `THIRD_PARTY_NOTICES.md`。
+
+### 参考母版布局
+
+外观页使用小标题栏、返回箭头、响应式手机预览、主题选项和图标分组开关；设置页使用 MIUIX 带说明和勾选的更新渠道菜单。关于页保留模板品牌，沿用 LeiFetch 全屏动态背景、分阶段淡出与模糊链接卡片（低版本使用普通背景），展示图标、名称、版本及透明链接卡；点击版本可复制信息，系统返回回到设置。
+
+更新弹窗使用 MIUIX 底部布局，Markdown 说明可滚动；下载源可通过 `AppMetadata.UPDATE_MIRROR_PREFIX` 添加可选 HTTPS 镜像，默认仅 GitHub 原站。真实 APK 下载要求官方 Releases 提供有效的 `size` 和 `sha256:` digest，完成后校验大小和 SHA-256；缺少校验信息时提供发布页入口。安装前检查包名、版本和签名，正式应用还检查签名与当前版本一致且 versionCode 递增；安装需用户点击，并交给系统确认，未知来源权限返回后继续请求。

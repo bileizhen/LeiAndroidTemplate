@@ -7,6 +7,8 @@ data class AppRelease(
     val apkUrl: String?,
     val assetName: String?,
     val prerelease: Boolean,
+    val size: Long = 0L,
+    val sha256: String = "",
 )
 
 enum class UpdateChannel { STABLE, PRERELEASE }

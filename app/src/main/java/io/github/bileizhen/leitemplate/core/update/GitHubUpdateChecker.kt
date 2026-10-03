@@ -87,6 +87,8 @@ class GitHubUpdateChecker(
         val assets = release.optJSONArray("assets")
         var apkUrl: String? = null
         var assetName: String? = null
+        var size = 0L
+        var digest = ""
         if (assets != null) {
             for (index in 0 until assets.length()) {
                 val asset = assets.optJSONObject(index) ?: continue
@@ -95,6 +97,8 @@ class GitHubUpdateChecker(
                 if (name.endsWith(".apk", ignoreCase = true) && url.startsWith(expectedDownloadPrefix)) {
                     apkUrl = url
                     assetName = name
+                    size = asset.optLong("size", 0L)
+                    digest = asset.optString("digest").removePrefix("sha256:").lowercase()
                     break
                 }
             }
@@ -106,6 +110,8 @@ class GitHubUpdateChecker(
             apkUrl = apkUrl,
             assetName = assetName,
             prerelease = prerelease,
+            size = size,
+            sha256 = digest,
         )
     }
 

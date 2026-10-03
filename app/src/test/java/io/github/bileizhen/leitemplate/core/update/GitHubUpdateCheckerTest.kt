@@ -27,6 +27,15 @@ class GitHubUpdateCheckerTest {
         assertEquals("1.3.0-beta.2", checker.parseResponse(json.toString(), UpdateChannel.PRERELEASE)?.version)
     }
 
+    @Test fun assetSizeAndOfficialDigestArePreservedForDownloadValidation() {
+        val response = release("v1.2.0")
+        response.getJSONArray("assets").getJSONObject(0)
+            .put("size", 12345).put("digest", "sha256:" + "a".repeat(64))
+        val parsed = checker.parseResponse(response.toString(), UpdateChannel.STABLE)!!
+        assertEquals(12345L, parsed.size)
+        assertEquals("a".repeat(64), parsed.sha256)
+    }
+
     @Test fun untrustedReleaseLinksAreRejectedAndAssetsStayInsideTheRepository() {
         val untrusted = release("v1.2.0").put("html_url", "https://example.org/fake")
         assertNull(checker.parseResponse(untrusted.toString(), UpdateChannel.STABLE))

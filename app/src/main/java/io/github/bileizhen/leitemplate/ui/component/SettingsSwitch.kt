@@ -3,6 +3,9 @@ package io.github.bileizhen.leitemplate.ui.component
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Switch
 
@@ -14,10 +17,12 @@ fun SettingsSwitch(
     modifier: Modifier = Modifier,
     summary: String? = null,
     enabled: Boolean = true,
+    startAction: (@Composable () -> Unit)? = null,
 ) {
     BasicComponent(
-        modifier = modifier,
+        modifier = modifier.semantics { toggleableState = if (checked) ToggleableState.On else ToggleableState.Off },
         title = title,
+        startAction = startAction,
         summary = summary,
         enabled = enabled,
         role = Role.Switch,

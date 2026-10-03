@@ -1,66 +1,115 @@
+// Appearance layout migrated from LeiFetch MainActivity.appearanceItems (XBlocker / SukiSU-Ultra).
+// SPDX-License-Identifier: GPL-3.0-only.
 package io.github.bileizhen.leitemplate.feature.settings
 
 import android.os.Build
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.bileizhen.leitemplate.data.settings.AppearanceSettings
 import io.github.bileizhen.leitemplate.data.settings.ThemeMode
+import io.github.bileizhen.leitemplate.ui.component.TemplateIcons
 import io.github.bileizhen.leitemplate.ui.component.SettingsSwitch
+import io.github.bileizhen.leitemplate.ui.theme.LocalDarkTheme
+import kotlin.math.roundToInt
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Slider
+import top.yukonga.miuix.kmp.basic.SliderDefaults
 import top.yukonga.miuix.kmp.basic.TabRow
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextField
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun AppearanceScreen(viewModel: SettingsViewModel, onBack: () -> Unit) {
+    val uiText: (String) -> String = { it }
     val config by viewModel.settings.collectAsStateWithLifecycle()
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 120.dp),
-    ) {
-        item {
-            BasicComponent(title = "‹ 返回", onClick = onBack)
-            Text("外观", modifier = Modifier.padding(top = 12.dp))
-            TabRow(
-                tabs = listOf("跟随系统", "浅色", "深色"),
-                selectedTabIndex = config.themeMode.ordinal,
-                onTabSelected = { index -> viewModel.edit { it.copy(themeMode = ThemeMode.entries[index]) } },
-                height = 48.dp,
-            )
-            Card(Modifier.padding(top = 12.dp).fillMaxWidth()) {
-                SettingsSwitch("Monet 动态颜色", config.monet, { value -> viewModel.edit { it.copy(monet = value) } }, enabled = Build.VERSION.SDK_INT >= 31)
-                SettingsSwitch("模糊", config.blur, { value -> viewModel.edit { it.copy(blur = value) } }, enabled = Build.VERSION.SDK_INT >= 33)
-                SettingsSwitch("悬浮底栏", config.floatingBar, { value -> viewModel.edit { it.copy(floatingBar = value) } })
-                SettingsSwitch("液态玻璃", config.liquidGlass, { value -> viewModel.edit { it.copy(liquidGlass = value) } }, enabled = config.blur && config.floatingBar && Build.VERSION.SDK_INT >= 33)
-                SettingsSwitch("预测性返回手势", config.predictiveBack, { value -> viewModel.edit { it.copy(predictiveBack = value) } }, enabled = Build.VERSION.SDK_INT >= 34)
+    top.yukonga.miuix.kmp.basic.Scaffold(
+        topBar = { top.yukonga.miuix.kmp.basic.SmallTopAppBar(title = "外观", navigationIcon = {
+            top.yukonga.miuix.kmp.basic.IconButton(onClick = onBack, modifier = Modifier.size(48.dp).testTag("navigate_back")) {
+                Icon(TemplateIcons.Back, contentDescription = "返回")
             }
-            var scale by remember(config.uiScale) { mutableFloatStateOf(config.uiScale) }
+        }) }, popupHost = {},
+    ) { padding ->
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()).testTag("appearance_screen"), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp)) {
+        item {
+            Spacer(Modifier.height(12.dp))
+            ThemePreviewCardMiuix(LocalDarkTheme.current, config.monet, config.floatingBar, config.liquidGlass && config.blur && Build.VERSION.SDK_INT >= 33)
+            Spacer(Modifier.height(28.dp))
+            TabRow(tabs = listOf("跟随系统", "浅色", "深色"), selectedTabIndex = config.themeMode.ordinal,
+                onTabSelected = { index -> viewModel.edit { it.copy(themeMode = ThemeMode.entries[index]) } }, height = 48.dp)
             Card(Modifier.padding(top = 12.dp).fillMaxWidth()) {
-                BasicComponent(
-                    title = "显示缩放",
-                    summary = "${(scale * 100).toInt()}%",
+                SettingsSwitch(uiText("Monet 动态颜色"), config.monet, { value -> viewModel.edit { it.copy(monet = value) } },
+                    enabled = Build.VERSION.SDK_INT >= 31, summary = if (Build.VERSION.SDK_INT < 31) "需要 Android 12 或更高版本" else null,
+                    startAction = { SettingIcon(TemplateIcons.Image) }, modifier = Modifier.testTag("setting_monet"))
+            }
+            Card(Modifier.padding(top = 12.dp).fillMaxWidth()) {
+                SettingsSwitch(uiText("模糊"), config.blur, { value -> viewModel.edit { it.copy(blur = value) } },
+                    enabled = Build.VERSION.SDK_INT >= 33, summary = if (Build.VERSION.SDK_INT >= 33) "模糊悬浮底栏背景" else "需要 Android 13 或更高版本",
+                    startAction = { SettingIcon(TemplateIcons.Blur) }, modifier = Modifier.testTag("setting_blur"))
+                SettingsSwitch(uiText("悬浮底栏"), config.floatingBar, { value -> viewModel.edit { it.copy(floatingBar = value) } }, summary = uiText("首页与设置"),
+                    startAction = { SettingIcon(TemplateIcons.BottomBar) }, modifier = Modifier.testTag("setting_floating"))
+                SettingsSwitch(uiText("液态玻璃"), config.liquidGlass, { value -> viewModel.edit { it.copy(liquidGlass = value) } },
+                    enabled = config.floatingBar && config.blur && Build.VERSION.SDK_INT >= 33, summary = uiText("为悬浮底栏应用液态玻璃效果"),
+                    startAction = { SettingIcon(TemplateIcons.Drop) }, modifier = Modifier.testTag("setting_liquid"))
+            }
+            Card(Modifier.padding(top = 12.dp).fillMaxWidth()) {
+                SettingsSwitch(uiText("预测性返回手势"), config.predictiveBack, { value -> viewModel.edit { it.copy(predictiveBack = value) } },
+                    enabled = Build.VERSION.SDK_INT >= 34, summary = uiText("启用预测性返回手势支持"),
+                    startAction = { SettingIcon(TemplateIcons.Back) }, modifier = Modifier.testTag("setting_predictive"))
+                var sliderValue by remember(config.uiScale) { mutableFloatStateOf(config.uiScale) }
+                var showScaleDialog by rememberSaveable { mutableStateOf(false) }
+                BasicComponent(title = uiText("显示缩放"), summary = uiText("调整界面整体缩放"), startAction = { SettingIcon(TemplateIcons.Scale) },
+                    endActions = {
+                        Text("${(sliderValue * 100).roundToInt()}%", color = MiuixTheme.colorScheme.onSurfaceVariantActions)
+                        Icon(TemplateIcons.Forward, contentDescription = null, tint = MiuixTheme.colorScheme.onSurfaceVariantActions)
+                    }, onClick = { showScaleDialog = true },
                     bottomAction = {
-                        Slider(
-                            value = scale,
-                            onValueChange = { scale = it },
-                            onValueChangeFinished = { viewModel.edit { it.copy(uiScale = scale) } },
-                            valueRange = AppearanceSettings.MIN_SCALE..AppearanceSettings.MAX_SCALE,
-                        )
-                    },
-                )
+                        Slider(value = sliderValue, onValueChange = { sliderValue = it },
+                            onValueChangeFinished = { viewModel.edit { it.copy(uiScale = sliderValue) } },
+                            valueRange = AppearanceSettings.MIN_SCALE..AppearanceSettings.MAX_SCALE, showKeyPoints = true,
+                            keyPoints = listOf(.8f, .9f, 1f, 1.1f, 1.2f), magnetThreshold = .01f,
+                            hapticEffect = SliderDefaults.SliderHapticEffect.Step, modifier = Modifier.testTag("setting_scale").semantics {
+                                // Miuix's SetProgress does not invoke onValueChangeFinished;
+                                // accessibility/programmatic adjustments must persist as well.
+                                setProgress { target ->
+                                    sliderValue = target.coerceIn(AppearanceSettings.MIN_SCALE, AppearanceSettings.MAX_SCALE)
+                                    viewModel.edit { it.copy(uiScale = sliderValue) }
+                                    true
+                                }
+                            })
+                    })
+                OverlayDialog(show = showScaleDialog, title = uiText("显示缩放"), summary = "80% - 120%", onDismissRequest = { showScaleDialog = false }) {
+                    var input by remember(showScaleDialog) { mutableStateOf((config.uiScale * 100).roundToInt().toString()) }
+                    TextField(value = input, onValueChange = { if (it.length <= 3 && it.all(Char::isDigit)) input = it }, singleLine = true)
+                    Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TextButton(uiText("取消"), onClick = { showScaleDialog = false }, modifier = Modifier.weight(1f))
+                        TextButton(uiText("确定"), enabled = input.toIntOrNull() in 80..120, onClick = {
+                            input.toIntOrNull()?.let { value -> viewModel.edit { it.copy(uiScale = value.coerceIn(80, 120) / 100f) } }
+                            showScaleDialog = false
+                        }, modifier = Modifier.weight(1f))
+                    }
+                }
             }
         }
+
     }
+}
+
+}
+
+@Composable
+internal fun SettingIcon(icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    Icon(icon, contentDescription = null, modifier = Modifier.padding(end = 12.dp).size(24.dp))
 }

@@ -23,3 +23,31 @@ The quantized sensor-light adapter was adapted from 123PanX's `ui/util/TiltLight
 The Gradle Wrapper is distributed under Apache-2.0. Its generated launch scripts retain their upstream copyright notices.
 
 Full GPL-3.0 and Apache-2.0 texts are packaged in `app/src/main/assets/legal/` and accessible offline from the About page. APK recipients can obtain the corresponding application source and build instructions from the configured GitHub project link.
+
+## Shared settings, About, diagnostic and update UI
+
+The phone theme preview, icon paths, appearance layout, LeiFetch About logo/fade layout and blurred bars, animated About background shaders, bottom dialogs and update Markdown renderer are adapted from the local 123PanX / LeiFetch / XBlocker / SukiSU-Ultra source chain. GPL-3.0-only attribution headers are retained. Template branding and product configuration replace application-specific data.
+
+The cancellable HTTPS download and verification helper is adapted from 123PanX `UpdateDownloader.kt`, originally XBlocker `data/AppUpdates.kt`. OkHttp and Okio are used under Apache-2.0. The upstream helper's MIT permission follows:
+
+MIT License
+
+Copyright (c) 2026 XBlocker contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

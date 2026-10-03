@@ -14,6 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -33,7 +35,7 @@ enum class LegalDocument(val title: String, val asset: String) {
 }
 
 @Composable
-fun LegalDocumentScreen(document: LegalDocument, onBack: () -> Unit) {
+fun LegalDocumentScreen(document: LegalDocument, onBack: () -> Unit, onOpenDocument: (LegalDocument) -> Unit) {
     val context = LocalContext.current
     var text by remember(document) { mutableStateOf<String?>(null) }
     var error by remember(document) { mutableStateOf<String?>(null) }
@@ -51,9 +53,18 @@ fun LegalDocumentScreen(document: LegalDocument, onBack: () -> Unit) {
         } catch (_: Exception) { error = "文档暂时无法读取，请重试。" }
     }
     val paragraphs = remember(text) { text?.split(Regex("\\n\\s*\\n")) ?: emptyList() }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 24.dp, 16.dp, 48.dp)) {
-        item { BasicComponent(title = "‹ 返回", onClick = onBack) }
-        item { Text(document.title, fontSize = 28.sp, modifier = Modifier.padding(vertical = 12.dp)) }
+    top.yukonga.miuix.kmp.basic.Scaffold(topBar = {
+        top.yukonga.miuix.kmp.basic.SmallTopAppBar(title = document.title, navigationIcon = {
+            top.yukonga.miuix.kmp.basic.IconButton(onClick = onBack, modifier = Modifier.size(48.dp).testTag("navigate_back")) {
+                top.yukonga.miuix.kmp.basic.Icon(io.github.bileizhen.leitemplate.ui.component.TemplateIcons.Back, "返回")
+            }
+        })
+    }, popupHost = {}) { padding ->
+    LazyColumn(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()).testTag("legal_document"), contentPadding = PaddingValues(16.dp, 24.dp, 16.dp, 48.dp)) {
+        if (document == LegalDocument.LICENSE) item {
+            top.yukonga.miuix.kmp.preference.ArrowPreference(title = "Apache License 2.0",
+                summary = "MIUIX、AndroidX 等组件的许可", onClick = { onOpenDocument(LegalDocument.APACHE) })
+        }
         if (error != null) item { BasicComponent(title = error, summary = "点击重试", onClick = { attempt++ }) }
         else if (text == null) item { Text("正在读取…") }
         items(paragraphs) { paragraph ->
@@ -67,4 +78,6 @@ fun LegalDocumentScreen(document: LegalDocument, onBack: () -> Unit) {
             }
         }
     }
+}
+
 }
