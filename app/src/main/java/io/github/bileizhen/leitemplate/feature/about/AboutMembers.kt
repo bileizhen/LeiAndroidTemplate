@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
@@ -168,7 +169,7 @@ internal fun AnimatedListItem(
 internal fun MemberDetailDialog(show: Boolean, focus: MemberFocus?, onDismiss: () -> Unit) {
     val contentHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 160.dp).coerceAtLeast(180.dp)
     OverlayDialog(show = show, title = "成员信息", onDismissRequest = onDismiss) {
-        Column(Modifier.fillMaxWidth().heightIn(max = contentHeight)) {
+        Column(Modifier.fillMaxWidth().heightIn(max = contentHeight).testTag("member_dialog_content")) {
             focus?.let { current ->
                 Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     QqAvatar(current.member.qq, size = 76.dp, spec = 640)
@@ -187,13 +188,6 @@ internal fun MemberDetailDialog(show: Boolean, focus: MemberFocus?, onDismiss: (
                         modifier = Modifier.weight(1f, fill = false).fillMaxWidth().heightIn(max = 300.dp)
                             .verticalScroll(rememberScrollState())
                             .padding(top = 12.dp))
-                }
-                if (current.member.name == io.github.bileizhen.leitemplate.core.config.AppMetadata.AUTHOR) {
-                    val context = androidx.compose.ui.platform.LocalContext.current
-                    top.yukonga.miuix.kmp.preference.ArrowPreference(title = "GitHub",
-                        onClick = { io.github.bileizhen.leitemplate.ui.util.openExternalLink(context, io.github.bileizhen.leitemplate.core.config.AppMetadata.AUTHOR_URL) })
-                    top.yukonga.miuix.kmp.preference.ArrowPreference(title = "问题反馈",
-                        onClick = { io.github.bileizhen.leitemplate.ui.util.openExternalLink(context, io.github.bileizhen.leitemplate.core.config.AppMetadata.ISSUES_URL) })
                 }
                 TextButton("关闭", onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth().padding(top = 18.dp))

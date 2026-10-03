@@ -71,6 +71,8 @@ class TemplateCapabilitiesTest {
         compose.onNodeWithText("bileizhen").performClick()
         compose.onNodeWithText("成员信息").assertIsDisplayed()
         compose.onNodeWithText("分工").assertExists()
+        compose.onNode(hasText("GitHub") and hasAnyAncestor(hasTestTag("member_dialog_content"))).assertDoesNotExist()
+        compose.onNodeWithText("问题反馈").assertDoesNotExist()
         val close = compose.onNodeWithText("关闭").assertIsDisplayed().fetchSemanticsNode()
         assertTrue("Member close button must remain usable with long text", close.boundsInWindow.height >= 40f * application.resources.displayMetrics.density)
         compose.onNodeWithText("关闭").performClick()
