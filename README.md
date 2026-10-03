@@ -62,7 +62,7 @@ Windows：
 
 Wrapper 从 Gradle 官方服务下载发行包并验证 SHA-256。若下载的源码归档省略了 JAR，可运行 `python scripts/bootstrap_gradle_wrapper.py` 恢复；该脚本校验发行包后提取内嵌的标准 Wrapper，不依赖系统 Gradle。
 
-请安装 JDK 17 或更新版本，以及 Android SDK Platform 37。使用 Android Studio 配置 SDK，或在本机的 `local.properties` 中填写 `sdk.dir`；本机配置不提交。Windows 项目路径包含中文时，可从指向工程的 ASCII 目录联接或 `subst` 盘符构建。
+请安装 JDK 17 或更新版本，以及 Android SDK Platform 37.0（SDK Manager 包名 `platforms;android-37.0`）。工程显式设置 `compileSdkMinor = 0`，与官方平台目录一致。使用 Android Studio 配置 SDK，或在本机的 `local.properties` 中填写 `sdk.dir`；本机配置不提交。Windows 项目路径包含中文时，可从指向工程的 ASCII 目录联接或 `subst` 盘符构建。
 
 GitHub Actions 显式安装 SDK，优先使用官方 Maven 仓库，执行初始化脚本回归检查、`assembleDebug` 与单元测试，并上传 Debug APK 和测试报告。
 

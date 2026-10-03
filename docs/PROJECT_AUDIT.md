@@ -27,6 +27,7 @@ The imported application features and source documentation are retained.
 - Rename both application and test source-set packages; skip generated files and machine-specific SDK settings during initialization.
 - Ignore overflowing release version numbers instead of throwing; propagate coroutine cancellation from update checks.
 - Exclude module build products from Git and preserve executable/LF wrapper scripts for Linux CI.
+- Install the official `platforms;android-37.0` SDK package and set `compileSdkMinor = 0` so a clean runner resolves the same platform without a local directory alias; avoid the retired SDK `tools` package.
 
 ## Verification commands
 

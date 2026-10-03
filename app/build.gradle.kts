@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "io.github.bileizhen.leitemplate"
     compileSdk = 37
+    compileSdkMinor = 0
 
     defaultConfig {
         applicationId = "io.github.bileizhen.leitemplate"
